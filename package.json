@@ -1,0 +1,21 @@
+{
+  "name": "unimaster-blog",
+  "version": "1.0.0",
+  "description": "Unimaster blog core",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index"
+  },
+  "keywords": [
+    "blog",
+    "destry",
+    "unimaster"
+  ],
+  "author": "Destry-Unimaster <agafonovandrej69@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1"
+  }
+}
