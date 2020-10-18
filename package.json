@@ -4,7 +4,8 @@
   "description": "Unimaster blog core",
   "main": "index.js",
   "scripts": {
-    "test": "node index"
+    "start": "node index",
+    "dev": "nodemon index.js"
   },
   "keywords": [
     "blog",
@@ -17,5 +18,8 @@
     "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.5"
   }
 }
