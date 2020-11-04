@@ -1,17 +1,17 @@
+require('dotenv').config();
+
 const express = require('express');
-const {json, urlencoded} = require('body-parser');
 const app = express();
-const r = express().route();
 
-const PORT = process.env.PORT || 80;
+const config = require('./lib/config');
+const handlers = require('./handlers/main');
+const routers = require('./routers/main');
 
-app.use(json());
-app.use(urlencoded({extended: true}));
+//All app.use(...); constructions
+handlers.forEach(handler => handler(app));
+//All API's routes
+routers.forEach(router => router(app));
 
-app.get('/', (req, res) => {
-    res.send('Blog core');
-});
-
-app.listen(PORT, () => {
-    console.log(`Server has been started at ${PORT} port...`);
+app.listen(config.port, () => {
+    console.log(`Server has been started at ${config.port} port...`);
 });

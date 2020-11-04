@@ -31,3 +31,4 @@ dist
 .serverless/
 .dynamodb/
 .vscode-test
+*.rest
