@@ -4,6 +4,7 @@ const express = require('express');
 const app = express();
 
 const config = require('./lib/config');
+const mongo = require('./lib/mongo-config');
 const handlers = require('./handlers/main');
 const routers = require('./routers/main');
 
@@ -12,6 +13,10 @@ handlers.forEach(handler => handler(app));
 //All API's routes
 routers.forEach(router => router(app));
 
-app.listen(config.port, () => {
-    console.log(`Server has been started at ${config.port} port...`);
+mongo(err => {
+    if (err) throw err;
+
+    app.listen(config.port, () => {
+        console.log(`Server has been started at ${config.port} port...`);
+    });
 });
