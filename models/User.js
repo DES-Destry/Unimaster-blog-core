@@ -28,10 +28,13 @@ const uSchema = new Schema({
     }
 });
 
-uSchema.virtual('password').set(async function(value) {
+uSchema.virtual('password').get(function() {
+    return this.hPassword;
+})
+.set(function(value) {
     try{
-        const salt = await bcrypt.genSalt(config.saltValue);
-        const hash = await bcrypt.hash(value, salt);
+        const salt = bcrypt.genSaltSync(Number(config.saltValue));
+        const hash = bcrypt.hashSync(value, salt);
 
         this.hPassword = hash;
     }
@@ -40,10 +43,9 @@ uSchema.virtual('password').set(async function(value) {
     }
 });
 
-uSchema.methods.checkPass = async function(pass) {
+uSchema.methods.checkPass = function(pass) {
     try{
-        const result = await bcrypt.compare(pass, this.hPassword);
-        return result;
+        return bcrypt.compareSync(pass, this.hPassword);
     }
     catch(err){
         console.log(`CHECK PASS ERROR: ${err.message}`);
