@@ -12,7 +12,7 @@ module.exports = {
             if (err) return res.status(500).send('Unknown authenticate error!');
 
             if (user){
-                res.send('Authenticated!');
+                next();
             }
             else{
                 res.status(401).send('Users data is not correct. Try again or register the user.');

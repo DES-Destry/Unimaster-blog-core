@@ -6,5 +6,5 @@ const routes = require('../app/routes/api-userRoutes');
 routes(router);
 
 module.exports = (app) => {
-    app.use(router, path);
+    app.use(path, router);
 }

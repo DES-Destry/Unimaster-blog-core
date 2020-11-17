@@ -4,5 +4,5 @@ const { validations } = require('../../lib/utils');
 
 module.exports = (router) => {
     router.put('/description', validations.description, authController.auth, controller.changeDescription);
-    router.put('/username', validations.username, controller.changeUsername);
+    router.put('/username', validations.username, authController.auth, controller.changeUsername);
 }
