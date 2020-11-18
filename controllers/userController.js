@@ -15,11 +15,10 @@ module.exports = {
             if (validateErrors(req, res)) return;
 
             const { newDescription } = req.body;
-            console.log(newDescription);
             const currentUser = req.session.passport.user;
 
             if (currentUser){
-                await User.findOneAndUpdate({ _id: currentUser._id }, { $set: { profileDescription: newDescription } });
+                await User.findByIdAndUpdate(currentUser._id, { $set: { profileDescription: newDescription } });
                 return res.send('Description updated');
             }
 
@@ -30,7 +29,31 @@ module.exports = {
         }
     },
 
-    changeUsername: function(req, res){
-        res.send('test');
+    changeUsername: async function(req, res){
+        try{
+            if (validateErrors(req, res)) return;
+
+            const { newUsername } = req.body;
+            const currentUser = req.session.passport.user;
+
+            if (currentUser){
+                if (currentUser.username === newUsername){
+                    return res.status(400).send('The old and new username must be different');
+                }
+
+                const someUser = await User.findOne({ username: newUsername });
+                if (someUser){
+                    return res.status(400).send('The user with this username already exists');
+                }
+
+                await User.findByIdAndUpdate(currentUser._id, { $set: { username: newUsername } });
+                return res.send('Users username has been changed');
+            }
+
+            res.status(401).send('Current user not found!');
+        }
+        catch(err){
+            res.status(500).send('Unknown server error');
+        }
     }
 }
