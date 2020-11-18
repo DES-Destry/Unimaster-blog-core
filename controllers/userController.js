@@ -17,6 +17,7 @@ module.exports = {
             const { newDescription } = req.body;
             const currentUser = req.session.passport.user;
 
+            //If user exists in session
             if (currentUser){
                 await User.findByIdAndUpdate(currentUser._id, { $set: { profileDescription: newDescription } });
                 return res.send('Description updated');
@@ -36,11 +37,14 @@ module.exports = {
             const { newUsername } = req.body;
             const currentUser = req.session.passport.user;
 
+            //If user exists in session
             if (currentUser){
+                //The old and new username must be different
                 if (currentUser.username === newUsername){
                     return res.status(400).send('The old and new username must be different');
                 }
 
+                //Check user with current new username. If user with this username already exists, return HTTP code 400
                 const someUser = await User.findOne({ username: newUsername });
                 if (someUser){
                     return res.status(400).send('The user with this username already exists');
