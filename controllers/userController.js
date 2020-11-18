@@ -1,5 +1,7 @@
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const config = require('../lib/config');
 
 function validateErrors(req, res){
     var errors = validationResult(req);
@@ -51,7 +53,22 @@ module.exports = {
                 }
 
                 await User.findByIdAndUpdate(currentUser._id, { $set: { username: newUsername } });
-                return res.send('Users username has been changed');
+                const newUser = await User.findById(currentUser._id);
+
+                req.logout();
+
+                return req.logIn(newUser, err => {
+                    if (err) return res.status(500).send('Unknown server error');
+
+                    const email = newUser.email;
+                    const username = newUser.username;
+                    const token = jwt.sign({ email, username }, config.jwtSecret);
+
+                    const response = { ...newUser._doc, ...{ token } }
+                    delete response.hPassword;
+                    
+                    return res.json(response);
+                });
             }
 
             res.status(401).send('Current user not found!');

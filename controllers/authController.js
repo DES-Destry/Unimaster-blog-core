@@ -40,8 +40,8 @@ module.exports = {
             createdUser.save();
 
             //Form a JSON for send to the client. It contains jwt and user data without password
-            const response = { ...createdUser, ...{ token } };
-            delete response.hPassword
+            const response = { ...createdUser._doc, ...{ token } };
+            delete response.hPassword;
 
             res.json(response);
         }
