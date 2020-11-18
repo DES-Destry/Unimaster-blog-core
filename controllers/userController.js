@@ -59,5 +59,36 @@ module.exports = {
         catch(err){
             res.status(500).send('Unknown server error');
         }
+    },
+
+    deleteUser: async function(req, res){
+        try{
+            if (validateErrors(req, res)) return;
+
+            const { login, password } = req.body;
+
+            //Users login can contain username or email
+            const findedUserByEmail = await User.findOne({ email: login });
+            const findedUserByUsername = await User.findOne({ username: login });
+
+            //These two variables cannot be populated at the same time. One of them is necessarily undefined.
+            if (findedUserByEmail || findedUserByUsername){
+                const findedUser = findedUserByEmail ? findedUserByEmail : findedUserByUsername;
+
+                if (findedUser.checkPass(password)){
+                    //Delete from user database and logout from session
+                    await User.findByIdAndDelete(findedUser._id);
+                    req.logout();
+                    return res.send('User has been deleted');
+                }
+
+                return res.status(401).send('Incorrect password');
+            }
+
+            res.status(401).send('User with this email or username not exists');
+        }
+        catch(err){
+            res.status(500).send('Unknown server error');
+        }
     }
 }

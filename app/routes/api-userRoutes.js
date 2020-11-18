@@ -33,7 +33,7 @@ module.exports = (router) => {
         Changing profile username of blog user.
 
         -Usage:
-        Made PUT request to  hostname/api/auth/username with request body.
+        Made PUT request to  hostname/api/user/username with request body.
         Request body contains 1 value: "newUsername".
         Request body type - JSON. Don't forget for "Content-Type: application/json" header.
         Request must be authenticated. Don't forget for "Authorization: Bearer {some_token}" header.
@@ -51,4 +51,28 @@ module.exports = (router) => {
         }
     */
     router.put('/username', validations.username, authController.auth, controller.changeUsername);
+
+
+    /*
+        -Functional:
+        Delete user from blog. VERY DANGEROUS ENDPOINT!
+
+        -Usage:
+        Made DELETE request to  hostname/api/user/ with request body.
+        Request body contains 2 values: "login" and "password".
+        In body.login user can write username or email.
+        Request body type - JSON. Don't forget for "Content-Type: application/json" header.
+        Request must be authenticated. Don't forget for "Authorization: Bearer {some_token}" header.
+
+        -Example:
+        DELETE  http://localhost:3000/api/user/
+        Content-Type: application/json
+        Authorization: Bearer {token}
+
+        {
+            "login": "Username",  #(or test@gmail.com)
+            "password": "12345678"
+        }
+    */
+    router.delete('/', authController.auth, controller.deleteUser);
 }
