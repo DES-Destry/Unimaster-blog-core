@@ -15,7 +15,8 @@ function validateErrors(req, res){
         response.errorType = typeof(Error);
         response.content = errors.array();
 
-        return res.status(400).json(response);
+        res.status(400).json(response);
+        return true;
     }
 }
 
