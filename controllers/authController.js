@@ -125,7 +125,7 @@ module.exports = {
                     });
                 }
 
-                response.errorMsg = 'User has been founded, but password not correct'
+                response.errorMsg = 'Incorrect password'
                 response.errorType = typeof(Error);
                 return res.status(401).json(response);
             }
