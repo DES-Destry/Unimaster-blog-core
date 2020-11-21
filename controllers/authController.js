@@ -54,8 +54,10 @@ module.exports = {
             const { username, email, password } = req.body;
 
             //If such user already exist we can't create new user
-            const user = await User.findOne({ email });
-            if (user){
+            const userByEmail = await User.findOne({ email });
+            const userByUsername = await User.findOne({ username });
+
+            if (userByEmail || userByUsername){
                 response.errorMsg = 'User with this email already exists';
                 response.errorType = typeof(Error);
 
