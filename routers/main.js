@@ -3,5 +3,5 @@ const apiUser = require('./api-user');
 
 module.exports = [
     apiAuth,
-    apiUser
-]
+    apiUser,
+];

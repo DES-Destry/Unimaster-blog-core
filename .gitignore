@@ -32,3 +32,4 @@ dist
 .dynamodb/
 .vscode-test
 *.rest
+.idea

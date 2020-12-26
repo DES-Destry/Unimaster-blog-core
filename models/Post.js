@@ -1,75 +1,75 @@
-const {Schema, model} = require('mongoose');
+const { Schema, model } = require('mongoose');
 
 const pSchema = new Schema({
-    description:{
+    description: {
         type: String,
-        required: true
+        required: true,
     },
     content: {
         type: String,
         required: true,
-        minlength: 25
+        minlength: 25,
     },
     createDate: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
-    likes:[
+    likes: [
         {
             user: {
                 type: Schema.Types.ObjectId,
                 ref: 'users',
-                required: true
-            }
-        }
-    ],
-    dislikes:[
-        {
-            user: {
-                type: Schema.Types.ObjectId,
-                ref: 'users',
-                required: true
-            }
-        }
-    ],
-    comments:[
-        {
-            user: {
-                type: Schema.Types.ObjectId,
-                ref: 'users',
-                required: true
+                required: true,
             },
-            content:{
+        },
+    ],
+    dislikes: [
+        {
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'users',
+                required: true,
+            },
+        },
+    ],
+    comments: [
+        {
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'users',
+                required: true,
+            },
+            content: {
                 type: String,
-                required: true
+                required: true,
             },
-            creationDate:{
+            creationDate: {
                 type: Date,
-                required: true
+                required: true,
             },
-            likes:[
+            likes: [
                 {
                     user: {
                         type: Schema.Types.ObjectId,
                         ref: 'users',
-                        required: true
-                    }
-                }
+                        required: true,
+                    },
+                },
             ],
-            dislikes:[
+            dislikes: [
                 {
                     user: {
                         type: Schema.Types.ObjectId,
                         ref: 'users',
-                        required: true
-                    }
-                }
+                        required: true,
+                    },
+                },
             ],
             answerTo: {
-                type: String
-            }
-        }
-    ]
+                type: String,
+            },
+        },
+    ],
 });
 
 module.exports = model('Post', pSchema);

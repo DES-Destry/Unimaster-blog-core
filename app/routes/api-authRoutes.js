@@ -10,7 +10,7 @@ module.exports = (router) => {
         Made POST request to "{hostname}/api/auth/registrate" with request body.
         Request body contains 3 values: "username", "email" and "password".
         Request body type - JSON. Don't forget for "Content-Type: application/json" header.
-        
+
         -Server validation:
         Username -> not empty and not email.
         Email -> must be email.
@@ -44,7 +44,7 @@ module.exports = (router) => {
         -Usage:
         Made POST request to "{hostname}/api/auth/login" with request body.
         Request body contains 2 values: "login" and "password".
-        Request body type - JSON. Don't forget for "Content-Type: application/json" header. 
+        Request body type - JSON. Don't forget for "Content-Type: application/json" header.
         In body.login user can write username or email.
 
         -Success response:
@@ -70,7 +70,7 @@ module.exports = (router) => {
         -Functional:
         Logout user from blog. For future autentication user will need authorize again.
 
-        -Usage: 
+        -Usage:
         Made POST request to "{hostname}/api/auth/logout"
 
         -Success response:
@@ -81,4 +81,4 @@ module.exports = (router) => {
         POST http://localhost:3000/api/auth/logout
     */
     router.post('/logout', controller.logout);
-}
+};

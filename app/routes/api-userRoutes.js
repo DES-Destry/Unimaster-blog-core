@@ -12,7 +12,7 @@ module.exports = (router) => {
         Request body contains 1 value: "newDescription".
         Request body type - JSON. Don't forget for "Content-Type: application/json" header.
         Request must be authenticated. Don't forget for "Authorization: Bearer {some_token}" header.
-        
+
         -Server validation:
         newDescription -> not less than 10 and not longer than 5000 symbols.
 
@@ -36,7 +36,6 @@ module.exports = (router) => {
     */
     router.put('/description', validations.description, authController.auth, controller.changeDescription);
 
-
     /*
         -Functional:
         Changing profile username of blog user.
@@ -46,7 +45,7 @@ module.exports = (router) => {
         Request body contains 1 value: "newUsername".
         Request body type - JSON. Don't forget for "Content-Type: application/json" header.
         Request must be authenticated. Don't forget for "Authorization: Bearer {some_token}" header.
-        
+
         -Server validation:
         newUsername -> not empty and not email.
 
@@ -70,7 +69,6 @@ module.exports = (router) => {
         }
     */
     router.put('/username', validations.username, authController.auth, controller.changeUsername);
-
 
     /*
         -Functional:
@@ -103,4 +101,4 @@ module.exports = (router) => {
         }
     */
     router.delete('/', authController.auth, controller.deleteUser);
-}
+};
