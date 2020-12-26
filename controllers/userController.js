@@ -1,32 +1,15 @@
 const jwt = require('jsonwebtoken');
-const { validationResult } = require('express-validator');
 
 const User = require('../models/User');
 const config = require('../lib/config');
-const { objects } = require('../lib/utils');
-
-function validateErrors(req, res) {
-    const response = Object.create(objects.serverResponse);
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        response.success = false;
-        response.msg = 'Validation error';
-        response.content = errors.array();
-
-        res.status(400).json(response);
-        return true;
-    }
-
-    return false;
-}
+const { objects, validations, unknownError } = require('../lib/utils');
 
 module.exports = {
     async changeDescription(req, res) {
         const response = Object.create(objects.serverResponse);
 
         try {
-            if (validateErrors(req, res)) return;
+            if (validations.validateInput(req, res)) return;
 
             const { newDescription, currentUser } = req.body;
 
@@ -49,10 +32,7 @@ module.exports = {
             res.status(401).json(response);
         }
         catch (err) {
-            response.msg = err.message;
-            response.content = err;
-
-            res.status(500).json(response);
+            unknownError(res, err);
         }
     },
 
@@ -60,7 +40,7 @@ module.exports = {
         const response = Object.create(objects.serverResponse);
 
         try {
-            if (validateErrors(req, res)) return;
+            if (validations.validateInput(req, res)) return;
 
             const { newUsername, currentUser } = req.body;
 
@@ -106,11 +86,7 @@ module.exports = {
             res.status(401).json(response);
         }
         catch (err) {
-            response.success = false;
-            response.msg = err.message;
-            response.content = err;
-
-            res.status(500).json(response);
+            unknownError(res, err);
         }
     },
 
@@ -118,7 +94,7 @@ module.exports = {
         const response = Object.create(objects.serverResponse);
 
         try {
-            if (validateErrors(req, res)) return;
+            if (validations.validateInput(req, res)) return;
 
             const { login, password } = req.body;
 
@@ -153,11 +129,7 @@ module.exports = {
             res.status(401).json(response);
         }
         catch (err) {
-            response.success = false;
-            response.msg = err.message;
-            response.content = err;
-
-            res.status(500).json(response);
+            unknownError(res, err);
         }
     },
 };

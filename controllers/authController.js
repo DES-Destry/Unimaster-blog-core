@@ -1,26 +1,9 @@
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
-const { validationResult } = require('express-validator');
 
 const User = require('../models/User');
 const config = require('../lib/config');
-const { objects } = require('../lib/utils');
-
-function validateErrors(req, res) {
-    const response = Object.create(objects.serverResponse);
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        response.success = false;
-        response.msg = 'Validation error';
-        response.content = errors.array();
-
-        res.status(400).json(response);
-        return true;
-    }
-
-    return false;
-}
+const { objects, validations, unknownError } = require('../lib/utils');
 
 module.exports = {
     auth(req, res, next) {
@@ -29,10 +12,7 @@ module.exports = {
         // Authentication with passport-jwt
         passport.authenticate('jwt', { session: false }, (err, user) => {
             if (err) {
-                response.success = false;
-                response.msg = 'Unknown authenticate error';
-
-                return res.status(500).json(response);
+                unknownError(res, err);
             }
 
             if (user) {
@@ -52,7 +32,7 @@ module.exports = {
 
         try {
             // Validate user input
-            if (validateErrors(req, res)) return;
+            if (validations.validateInput(req, res)) return;
 
             const { username, email, password } = req.body;
 
@@ -83,11 +63,7 @@ module.exports = {
             res.json(response);
         }
         catch (err) {
-            response.success = false;
-            response.msg = err.message;
-            response.content = err;
-
-            res.status(500).json(response);
+            unknownError(res, err);
         }
     },
 
@@ -116,8 +92,8 @@ module.exports = {
                     response.success = true;
                     response.msg = 'Loging in has been successful';
                     response.content = {
-                            ...findedUser._doc,
-                            ...{ token },
+                        ...findedUser._doc,
+                        ...{ token },
                     };
                     delete response.content.hPassword;
 
@@ -134,11 +110,7 @@ module.exports = {
             return res.status(401).json(response);
         }
         catch (err) {
-            response.success = false;
-            response.msg = err.message;
-            response.content = err;
-
-            return res.status(500).json(response);
+            return unknownError(res, err);
         }
     },
 };
