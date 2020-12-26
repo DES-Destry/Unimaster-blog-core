@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 const bcrypt = require('bcrypt');
 const config = require('../lib/config');
+const logger = require('../dev/logger');
 
 const uSchema = new Schema({
     username: {
@@ -39,7 +40,7 @@ uSchema.virtual('password').get(function () {
         this.hPassword = hash;
     }
     catch (err) {
-        console.log(`VIRTUAL SET PASSWORD ERROR: ${err.message}`);
+        logger.logError(`VIRTUAL SET PASSWORD ERROR: ${err.message}`);
     }
 });
 
@@ -48,7 +49,8 @@ uSchema.methods.checkPass = function (pass) {
         return bcrypt.compareSync(pass, this.hPassword);
     }
     catch (err) {
-        console.log(`CHECK PASS ERROR: ${err.message}`);
+        logger.logError(`CHECK PASS ERROR: ${err.message}`);
+
         return false;
     }
 };

@@ -16,6 +16,7 @@
         "no-underscore-dangle": "off",
         "brace-style": "off",
         "no-unneeded-ternary": "off",
+        "func-names": "off",
         "max-len": "warn"
     }
 }
