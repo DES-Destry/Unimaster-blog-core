@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model, Types } = require('mongoose');
 
 const pSchema = new Schema({
     description: {
@@ -10,33 +10,33 @@ const pSchema = new Schema({
         required: true,
         minlength: 25,
     },
+    tags: [String],
+    writer: {
+        type: Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
     createDate: {
         type: Date,
-        default: Date.now,
+        default: Date.now(),
     },
     likes: [
         {
-            user: {
-                type: Schema.Types.ObjectId,
-                ref: 'users',
-                required: true,
-            },
+            type: Types.ObjectId,
+            ref: 'User',
         },
     ],
     dislikes: [
         {
-            user: {
-                type: Schema.Types.ObjectId,
-                ref: 'users',
-                required: true,
-            },
+            type: Types.ObjectId,
+            ref: 'User',
         },
     ],
     comments: [
         {
             user: {
-                type: Schema.Types.ObjectId,
-                ref: 'users',
+                type: Types.ObjectId,
+                ref: 'User',
                 required: true,
             },
             content: {
@@ -45,28 +45,22 @@ const pSchema = new Schema({
             },
             creationDate: {
                 type: Date,
-                required: true,
+                default: Date.now(),
             },
             likes: [
                 {
-                    user: {
-                        type: Schema.Types.ObjectId,
-                        ref: 'users',
-                        required: true,
-                    },
+                    type: Types.ObjectId,
+                    ref: 'User',
                 },
             ],
             dislikes: [
                 {
-                    user: {
-                        type: Schema.Types.ObjectId,
-                        ref: 'users',
-                        required: true,
-                    },
+                    type: Types.ObjectId,
+                    ref: 'User',
                 },
             ],
             answerTo: {
-                type: String,
+                type: Types.ObjectId,
             },
         },
     ],

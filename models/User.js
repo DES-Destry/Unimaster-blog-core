@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model, Types } = require('mongoose');
 const bcrypt = require('bcrypt');
 const config = require('../lib/config');
 const logger = require('../dev/logger');
@@ -9,6 +9,7 @@ const uSchema = new Schema({
         required: true,
         unique: true,
     },
+    // TODO: multiple emails
     email: {
         type: String,
         required: true,
@@ -18,10 +19,23 @@ const uSchema = new Schema({
         type: String,
         required: true,
     },
+    avatar: {
+        type: Types.ObjectId,
+        required: false,
+    },
     profileDescription: {
         type: String,
         required: false,
         default: 'Hey. You can write information about yourself here!',
+    },
+    privelegy: {
+        type: String,
+        enum: ['First Developer', 'Main Developer', 'Developer', 'Main Moderator', 'Active Moderator', 'Moderator', 'Main Proffesional', 'Proffesional', 'Active User', 'User'],
+        default: 'User',
+    },
+    location: {
+        type: String,
+        required: false,
     },
     createDate: {
         type: Date,
