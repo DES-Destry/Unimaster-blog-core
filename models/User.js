@@ -28,7 +28,7 @@ const uSchema = new Schema({
         required: false,
         default: 'Hey. You can write information about yourself here!',
     },
-    privelegy: {
+    privilege: {
         type: String,
         enum: ['First Developer', 'Main Developer', 'Developer', 'Main Moderator', 'Active Moderator', 'Moderator', 'Main Proffesional', 'Proffesional', 'Active User', 'User'],
         default: 'User',
@@ -40,6 +40,10 @@ const uSchema = new Schema({
     createDate: {
         type: Date,
         default: Date.now,
+    },
+    verified: {
+        type: Boolean,
+        default: false,
     },
 });
 

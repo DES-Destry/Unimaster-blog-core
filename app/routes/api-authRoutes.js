@@ -65,20 +65,4 @@ module.exports = (router) => {
         }
     */
     router.post('/login', controller.login);
-
-    /*
-        -Functional:
-        Logout user from blog. For future autentication user will need authorize again.
-
-        -Usage:
-        Made POST request to "{hostname}/api/auth/logout"
-
-        -Success response:
-        msg: 'Loging out has been successeful'.
-        content: nothing.
-
-        -Example:
-        POST http://localhost:3000/api/auth/logout
-    */
-    router.post('/logout', controller.logout);
 };

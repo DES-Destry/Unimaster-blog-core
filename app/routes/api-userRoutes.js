@@ -70,6 +70,8 @@ module.exports = (router) => {
     */
     router.put('/username', validations.username, authController.auth, controller.changeUsername);
 
+    router.get('/verificate', controller.verificateEmail);
+
     /*
         -Functional:
         Delete user from blog. VERY DANGEROUS ENDPOINT!
