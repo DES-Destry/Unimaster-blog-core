@@ -40,7 +40,7 @@ async function sendVerification(username, email, code) {
                           \n-You can't change username
                           \n-And more... `;
     await transporter.sendMail({
-        from: 'Unimaster blog <unimaster_blog_verification@internet.ru>',
+        from: config.blogMail,
         to: email,
         subject: 'Verificate your Unimaster blog profile!',
         text: emailContent,
