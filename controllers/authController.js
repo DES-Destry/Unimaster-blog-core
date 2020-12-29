@@ -8,7 +8,7 @@ const VerificationUser = require('../models/VerificationUser');
 const config = require('../lib/config');
 const { objects, validations, unknownError } = require('../lib/utils');
 
-const currentUrl = 'http://localhost:3000';
+const currentUrl = config.currentHost;
 const transporter = nodemailer.createTransport({
     host: 'smtp.mail.ru',
     port: 587,

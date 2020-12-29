@@ -72,6 +72,8 @@ module.exports = (router) => {
 
     router.get('/verificate', controller.verificateEmail);
 
+    router.post('/verificate/again', authController.auth, controller.sendVerificationAgain);
+
     /*
         -Functional:
         Delete user from blog. VERY DANGEROUS ENDPOINT!

@@ -1,10 +1,23 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { join, dirname } = require('path');
 
 const User = require('../models/User');
 const VerificationUser = require('../models/VerificationUser');
 const config = require('../lib/config');
 const { objects, validations, unknownError } = require('../lib/utils');
+
+const currentUrl = config.currentHost;
+const transporter = nodemailer.createTransport({
+    host: 'smtp.mail.ru',
+    port: 587,
+    secure: false,
+    auth: {
+        user: config.smtpLogin,
+        pass: config.smtpPass,
+    },
+});
 
 async function findUserByLogin(login) {
     // Users login can contain username or email
@@ -71,6 +84,55 @@ async function deleteUserErrorsHandled(findedUser, currentUser, password, res) {
     }
 
     return false;
+}
+
+async function sendVerification(currentUser, code) {
+    const emailContent = `Hello, dear ${currentUser.username}! Verificate your profile at Unimaster Blog:
+                          \n${currentUrl}/api/user/verificate?code=${code}
+                          \nThis verification need to disable some constraints of your blog profile. 
+                          \nList of constraints:
+                          \n-You can't write comments
+                          \n-You can't give grades(likes and dislikes)
+                          \n-You cant't write own posts
+                          \n-You can't change username
+                          \n-And more... `;
+    await transporter.sendMail({
+        from: config.blogMail,
+        to: currentUser.email,
+        subject: 'Verificate your Unimaster blog profile!',
+        text: emailContent,
+    });
+}
+
+async function checkOldCode(currentUser, res) {
+    const response = Object.create(objects.serverResponse);
+    const existedCode = await VerificationUser.findOne({ user: currentUser._id });
+
+    if (existedCode) {
+        const passed = (new Date().getTime() - existedCode.creationDate.getTime()) / 1000;
+        if (passed < 600) {
+            response.success = false;
+            response.msg = 'You can send only one verification per 10 minutes';
+            response.content = {
+                secondsLeft: 600 - passed,
+                timeout: existedCode.creationDate,
+            };
+
+            res.status(403).json(response);
+            return false;
+        }
+
+        await VerificationUser.findByIdAndDelete(existedCode._id);
+    }
+
+    return true;
+}
+
+async function generateNewCode(currentUser) {
+    const verificationCode = crypto.randomBytes(32).toString('hex');
+    new VerificationUser({ user: currentUser._id, verificationCode }).save();
+
+    await sendVerification(currentUser, verificationCode);
 }
 
 module.exports = {
@@ -155,6 +217,43 @@ module.exports = {
         await VerificationUser.findByIdAndDelete(userToVerificate._id);
 
         res.sendFile(join(dirname(__dirname), 'public', 'verified.html'));
+    },
+
+    async sendVerificationAgain(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            const { currentUser } = req.body;
+
+            if (!currentUser) {
+                response.success = false;
+                response.msg = 'User credantials not correct';
+
+                res.status(401).json(response);
+                return;
+            }
+
+            // Verificated user not need for verification. It's not an error
+            if (currentUser.verified === true) {
+                response.success = true;
+                response.msg = 'User already verificated';
+
+                res.status(208).json(response);
+                return;
+            }
+
+            if (await checkOldCode(currentUser, res)) {
+                await generateNewCode(currentUser);
+
+                response.success = true;
+                response.msg = 'Verification code has been sended again';
+
+                res.json(response);
+            }
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
     },
 
     async deleteUser(req, res) {
