@@ -28,6 +28,10 @@ const uSchema = new Schema({
         required: false,
         default: 'Hey. You can write information about yourself here!',
     },
+    score: {
+        type: Number,
+        default: 0,
+    },
     privilege: {
         type: String,
         enum: ['First Developer', 'Main Developer', 'Developer', 'Main Moderator', 'Active Moderator', 'Moderator', 'Main Proffesional', 'Proffesional', 'Active User', 'User'],

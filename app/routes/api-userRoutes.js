@@ -72,14 +72,17 @@ module.exports = (router) => {
 
     router.put('/location', validations.location, authController.auth, controller.changeLocation);
 
-    // POST /api/user/privilege?username=WonderfulUser
-    router.put('/privilege');
+    router.put('/privilege', validations.privilegy, authController.auth, controller.setPrivilege);
 
     router.put('/links');
 
     router.put('/avatar');
 
     router.delete('/avatar');
+
+    router.put('/password');
+
+    router.post('/password/restore');
 
     router.get('/verificate', controller.verificateEmail);
 

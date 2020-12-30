@@ -19,6 +19,19 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+const privilegies = new Map([
+    ['User', 0], // By default
+    ['Active User', 1], // Score 50-100
+    ['Proffesional', 2], // Score 100-500
+    ['Main Proffesional', 3], // Can gets only with active. Moderators can't set theese(0-3) privilegies. Score 500+
+    ['Moderator', 4],
+    ['Active Moderator', 5],
+    ['Main Moderator', 6],
+    ['Developer', 7],
+    ['Main Developer', 8],
+    ['First Developer', 9],
+]);
+
 async function findUserByLogin(login) {
     // Users login can contain username or email
     const findedUserByEmail = await User.findOne({ email: login });
@@ -219,6 +232,60 @@ module.exports = {
 
             response.success = true;
             response.msg = 'User location has been changed successful';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async setPrivilege(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            if (validations.validateInput(req, res)) return;
+
+            const { currentUser, newPrivilege, usernameToSet } = req.body;
+            const userToSet = await User.findOne({ username: usernameToSet });
+
+            if (!userToSet) {
+                response.success = false;
+                response.msg = 'Incorrect username for search';
+
+                res.status(400).json(response);
+                return;
+            }
+
+            const numericPrivilegeToSet = privilegies.get(newPrivilege);
+            const currentNumericPrivilege = privilegies.get(userToSet.privilege);
+            const currentUserNimericPrivilege = privilegies.get(currentUser.privilege);
+
+            if (!numericPrivilegeToSet) {
+                response.success = false;
+                response.msg = 'Incorrect privilege to set';
+
+                res.status(400).json(response);
+                return;
+            }
+
+            if (currentNumericPrivilege >= currentUserNimericPrivilege
+                || numericPrivilegeToSet <= 3) {
+                response.success = false;
+                response.msg = 'Access denied';
+
+                res.status(403).json(response);
+                return;
+            }
+
+            await User.findByIdAndUpdate(userToSet._id, {
+                $set: {
+                    privilege: newPrivilege,
+                },
+            });
+
+            response.success = true;
+            response.msg = `User's ${usernameToSet} privilege has been changed successful`;
 
             res.json(response);
         }
