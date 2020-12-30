@@ -41,6 +41,7 @@ const uSchema = new Schema({
         type: Date,
         default: Date.now,
     },
+    links: [String],
     verified: {
         type: Boolean,
         default: false,

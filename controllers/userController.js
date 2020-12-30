@@ -195,6 +195,38 @@ module.exports = {
         }
     },
 
+    async changeLocation(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            if (validations.validateInput(req, res)) return;
+
+            const { newLocation, currentUser } = req.body;
+
+            if (!currentUser) {
+                response.success = false;
+                response.msg = 'User credentials not correct';
+
+                res.status(401).json(response);
+                return;
+            }
+
+            await User.findByIdAndUpdate(currentUser._id, {
+                $set: {
+                    location: newLocation,
+                },
+            });
+
+            response.success = true;
+            response.msg = 'User location has been changed successful';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
     async verificateEmail(req, res) {
         const { code } = req.query;
 
