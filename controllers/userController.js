@@ -294,6 +294,23 @@ module.exports = {
         }
     },
 
+    async rewriteLinks(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            const { currentUser, links } = req.body;
+            await User.findByIdAndUpdate(currentUser._id, { $set: { links } });
+
+            response.success = true;
+            response.msg = 'User\'s links rewrited successful';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
     async verificateEmail(req, res) {
         const { code } = req.query;
 

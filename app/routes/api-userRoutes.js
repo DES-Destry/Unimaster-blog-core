@@ -74,7 +74,7 @@ module.exports = (router) => {
 
     router.put('/privilege', validations.privilegy, authController.auth, controller.setPrivilege);
 
-    router.put('/links');
+    router.put('/links', validations.links, authController.auth, controller.rewriteLinks);
 
     router.put('/avatar');
 

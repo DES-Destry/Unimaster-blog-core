@@ -45,7 +45,18 @@ const uSchema = new Schema({
         type: Date,
         default: Date.now,
     },
-    links: [String],
+    links: [
+        {
+            site: {
+                type: String,
+                require: true,
+            },
+            link: {
+                type: String,
+                require: true,
+            },
+        },
+    ],
     verified: {
         type: Boolean,
         default: false,
