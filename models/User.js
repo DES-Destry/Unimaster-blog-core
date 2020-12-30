@@ -1,5 +1,7 @@
 const { Schema, model, Types } = require('mongoose');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 const config = require('../lib/config');
 const logger = require('../dev/logger');
 
@@ -43,7 +45,11 @@ const uSchema = new Schema({
     },
     createDate: {
         type: Date,
-        default: Date.now,
+        default: Date.now(),
+    },
+    lastPasswordChanged: {
+        type: Date,
+        default: Date.now(),
     },
     links: [
         {
@@ -87,6 +93,11 @@ uSchema.methods.checkPass = function (pass) {
 
         return false;
     }
+};
+
+uSchema.methods.genToken = function () {
+    const { email, username, lastPasswordChanged } = this;
+    return jwt.sign({ email, username, lastPasswordChanged }, config.jwtSecret);
 };
 
 module.exports = model('User', uSchema);

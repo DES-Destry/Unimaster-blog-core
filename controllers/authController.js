@@ -59,7 +59,7 @@ async function createUserAndGetToken(username, email, password) {
     verificationUser.save();
     await sendVerification(username, email, verificationCode);
 
-    return jwt.sign({ email, username }, config.jwtSecret);
+    return createdUser.genToken();
 }
 
 module.exports = {

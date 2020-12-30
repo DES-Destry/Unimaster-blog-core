@@ -80,9 +80,13 @@ module.exports = (router) => {
 
     router.delete('/avatar');
 
-    router.put('/password');
+    router.put('/password', validations.changePassword, authController.auth, controller.changePassword);
 
-    router.post('/password/restore');
+    router.post('/password/restore/codeRequest', controller.restorePasswordRequest);
+
+    router.get('/password/restore/check', controller.checkRestoreCode);
+
+    router.put('/password/restore', validations.restorePassword, controller.restorePassword);
 
     router.get('/verificate', controller.verificateEmail);
 

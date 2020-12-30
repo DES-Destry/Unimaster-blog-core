@@ -5,6 +5,7 @@ const { join, dirname } = require('path');
 
 const User = require('../models/User');
 const VerificationUser = require('../models/VerificationUser');
+const RestoreUser = require('../models/RestoreUser');
 const config = require('../lib/config');
 const { objects, validations, unknownError } = require('../lib/utils');
 
@@ -45,15 +46,6 @@ async function findUserByLogin(login) {
 async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
     const response = Object.create(objects.serverResponse);
 
-    // If user not authenticated
-    if (!currentUser) {
-        response.success = false;
-        response.msg = 'Current user not found';
-
-        res.status(401).json(response);
-        return true;
-    }
-
     // The old and new username must be different
     if (currentUser.username === newUsername) {
         response.success = false;
@@ -88,7 +80,7 @@ async function deleteUserErrorsHandled(findedUser, currentUser, password, res) {
         return true;
     }
 
-    if (!findedUser || !findedUser.checkPass(password)) {
+    if (!findedUser || (!findedUser.checkPass(password) || currentUser.privilege !== 'First Developer')) {
         response.success = false;
         response.msg = 'Users credentials not correct';
 
@@ -97,6 +89,15 @@ async function deleteUserErrorsHandled(findedUser, currentUser, password, res) {
     }
 
     return false;
+}
+
+async function sendMail(to, subject, text) {
+    await transporter.sendMail({
+        from: config.blogMail,
+        to,
+        subject,
+        text,
+    });
 }
 
 async function sendVerification(currentUser, code) {
@@ -109,12 +110,25 @@ async function sendVerification(currentUser, code) {
                           \n-You cant't write own posts
                           \n-You can't change username
                           \n-And more... `;
-    await transporter.sendMail({
-        from: config.blogMail,
-        to: currentUser.email,
-        subject: 'Verificate your Unimaster blog profile!',
-        text: emailContent,
-    });
+
+    await sendMail(currentUser.email, 'Verificate your Unimaster blog profile!', emailContent);
+}
+
+async function sendPasswordChangedAlert(currentUser) {
+    const emailContent = `Hello, dear ${currentUser.username}!
+                          \nYour profile password has been changed!
+                          \nIf it was not you then please restore your password:
+                          \nLINK(coming soon...)`;
+
+    await sendMail(currentUser.email, 'Your Unimaster blog profile password has been changed!', emailContent);
+}
+
+async function sendPasswordRestoreCode(user, code) {
+    const emailContent = `Hello, dear ${user.username}!
+                        \nYour password restore code:
+                        \n${code}`;
+
+    await sendMail(user.email, 'Your Unimaster blog profile password restoring code!', emailContent);
 }
 
 async function checkOldCode(currentUser, res) {
@@ -148,6 +162,33 @@ async function generateNewCode(currentUser) {
     await sendVerification(currentUser, verificationCode);
 }
 
+async function changePasswordAndGetToken(user, password) {
+    await User.findByIdAndUpdate(user._id, {
+        $set: {
+            password,
+            lastPasswordChanged: Date.now(),
+        },
+    });
+    await sendPasswordChangedAlert(user);
+
+    return (await User.findById(user._id)).genToken();
+}
+
+async function checkPasswordCode(username, code, res) {
+    const response = Object.create(objects.serverResponse);
+    const restoreRequired = await RestoreUser.findOne({ restoreCode: code }).populate('userToRestore');
+
+    if (!restoreRequired || restoreRequired.userToRestore.username !== username) {
+        response.success = false;
+        response.msg = 'Code not avaiable for this user';
+
+        res.status(403).json(response);
+        return false;
+    }
+
+    return true;
+}
+
 module.exports = {
     async changeDescription(req, res) {
         const response = Object.create(objects.serverResponse);
@@ -156,15 +197,6 @@ module.exports = {
             if (validations.validateInput(req, res)) return;
 
             const { newDescription, currentUser } = req.body;
-
-            // If user not authenticated
-            if (!currentUser) {
-                response.success = false;
-                response.msg = 'User credentials not correct';
-
-                res.status(401).json(response);
-                return;
-            }
 
             await User.findByIdAndUpdate(currentUser._id,
                 {
@@ -215,14 +247,6 @@ module.exports = {
             if (validations.validateInput(req, res)) return;
 
             const { newLocation, currentUser } = req.body;
-
-            if (!currentUser) {
-                response.success = false;
-                response.msg = 'User credentials not correct';
-
-                res.status(401).json(response);
-                return;
-            }
 
             await User.findByIdAndUpdate(currentUser._id, {
                 $set: {
@@ -298,11 +322,123 @@ module.exports = {
         const response = Object.create(objects.serverResponse);
 
         try {
+            if (validations.validateInput(req, res)) return;
+
             const { currentUser, links } = req.body;
             await User.findByIdAndUpdate(currentUser._id, { $set: { links } });
 
             response.success = true;
             response.msg = 'User\'s links rewrited successful';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async changePassword(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            if (validations.validateInput(req, res)) return;
+
+            const { currentUser, oldPassword, newPassword } = req.body;
+
+            if (!currentUser.checkPass(oldPassword) || !currentUser.verified) {
+                response.success = false;
+                response.msg = 'Access denied';
+
+                res.status(403).json(response);
+                return;
+            }
+
+            const token = await changePasswordAndGetToken(currentUser, newPassword);
+
+            response.success = true;
+            response.msg = 'Password has been changed';
+            response.content = { token };
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async restorePasswordRequest(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            if (validations.validateInput(req, res)) return;
+
+            const { username } = req.body;
+
+            const userToRestore = await User.findOne({ username });
+
+            if (!userToRestore) {
+                response.success = false;
+                response.msg = 'User with this username not found';
+
+                res.status(400).json(response);
+                return;
+            }
+
+            await RestoreUser.findOneAndDelete({ userToRestore: userToRestore._id });
+
+            const restoreCode = crypto.randomInt(100000, 999999);
+            new RestoreUser({ userToRestore: userToRestore._id, restoreCode }).save();
+
+            await sendPasswordRestoreCode(userToRestore, restoreCode);
+
+            response.success = true;
+            response.msg = 'Restore code has been sended. Check email';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async checkRestoreCode(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            if (validations.validateInput(req, res)) return;
+
+            const { username, code } = req.body;
+
+            if (!checkPasswordCode(username, code, res)) return;
+
+            response.success = true;
+            response.msg = 'Code avaiable for this user';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async restorePassword(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            if (validations.validateInput(req, res)) return;
+
+            const { username, code, newPassword } = req.body;
+
+            if (!checkPasswordCode(username, code, res)) return;
+
+            const userToRestore = await User.findOne({ username });
+            const token = await changePasswordAndGetToken(userToRestore, newPassword);
+
+            await RestoreUser.findOneAndDelete({ userToRestore: userToRestore._id });
+
+            response.success = true;
+            response.msg = 'Password has been changed';
+            response.content = { token };
 
             res.json(response);
         }
@@ -340,14 +476,6 @@ module.exports = {
 
         try {
             const { currentUser } = req.body;
-
-            if (!currentUser) {
-                response.success = false;
-                response.msg = 'User credantials not correct';
-
-                res.status(401).json(response);
-                return;
-            }
 
             // Verificated user not need for verification. It's not an error
             if (currentUser.verified === true) {
