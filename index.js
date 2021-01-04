@@ -23,3 +23,6 @@ mongo((err) => {
         logger.logInfo(message);
     });
 });
+
+//Use only for integrated test of app's endpoints
+module.exports.testInstance = app;

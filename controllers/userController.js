@@ -198,10 +198,9 @@ module.exports = {
 
             const { newDescription, currentUser } = req.body;
 
-            await User.findByIdAndUpdate(currentUser._id,
-                {
-                    $set: { profileDescription: newDescription },
-                });
+            await User.findByIdAndUpdate(currentUser._id, {
+                $set: { profileDescription: newDescription },
+            });
 
             response.success = true;
             response.msg = 'Description updated';
