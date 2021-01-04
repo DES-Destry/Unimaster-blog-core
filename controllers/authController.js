@@ -21,12 +21,12 @@ const transporter = nodemailer.createTransport({
 
 async function findUserByLogin(login) {
     // Users login can contain username or email
-    const findedUserByEmail = await User.findOne({ email: login });
-    const findedUserByUsername = await User.findOne({ username: login });
+    const foundUserByEmail = await User.findOne({ email: login });
+    const foundUserByUsername = await User.findOne({ username: login });
 
     // These two variables cannot be populated at the same time.
     // One of them is necessarily undefined.
-    return findedUserByEmail ? findedUserByEmail : findedUserByUsername;
+    return foundUserByEmail ? foundUserByEmail : foundUserByUsername;
 }
 
 async function sendVerification(username, email, code) {
@@ -125,7 +125,7 @@ module.exports = {
         try {
             const { login, password } = req.body;
 
-            const foundUser = findUserByLogin(login);
+            const foundUser = await findUserByLogin(login);
 
             if (!foundUser || !foundUser.checkPass(password)) {
                 response.success = false;
