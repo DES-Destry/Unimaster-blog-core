@@ -1,5 +1,5 @@
 const { Schema, model, Types } = require('mongoose');
-const bcrypt = require('bcrypt');
+const { genSaltSync, hashSync, compareSync } = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const config = require('../lib/config');
@@ -74,8 +74,8 @@ uSchema.virtual('password').get(function () {
 })
 .set(function (value) {
     try {
-        const salt = bcrypt.genSaltSync(Number(config.saltValue));
-        const hash = bcrypt.hashSync(value, salt);
+        const salt = genSaltSync(Number(config.saltValue));
+        const hash = hashSync(value, salt);
 
         this.hPassword = hash;
     }
@@ -86,7 +86,7 @@ uSchema.virtual('password').get(function () {
 
 uSchema.methods.checkPass = function (pass) {
     try {
-        return bcrypt.compareSync(pass, this.hPassword);
+        return compareSync(pass, this.hPassword);
     }
     catch (err) {
         logger.logError(`CHECK PASS ERROR: ${err.message}`);

@@ -5,5 +5,5 @@ const corsHandler = require('./corsHandler');
 module.exports = [
     basePostHandlers,
     passportHandler,
-    corsHandler
+    corsHandler,
 ];

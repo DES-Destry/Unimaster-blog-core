@@ -1,5 +1,4 @@
 const passport = require('passport');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
@@ -136,8 +135,7 @@ module.exports = {
             }
 
             // Generate token for sending
-            const { email, username } = foundUser;
-            const token = jwt.sign({ email, username }, config.jwtSecret);
+            const token = foundUser.genToken();
 
             // Form a JSON for send to the client.
             // It contains jwt and user data without password

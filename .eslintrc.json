@@ -18,7 +18,7 @@
         "brace-style": "off",
         "no-unneeded-ternary": "off",
         "func-names": "off",
-        "max-len": "warn"
-    },
-    
+        "max-len": "warn",
+        "quote-props": "off"
+    }
 }

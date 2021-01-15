@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { join, dirname } = require('path');
+const { genSaltSync, hashSync } = require('bcrypt');
 
 const User = require('../models/User');
 const VerificationUser = require('../models/VerificationUser');
@@ -163,9 +164,12 @@ async function generateNewCode(currentUser) {
 }
 
 async function changePasswordAndGetToken(user, password) {
+    const salt = genSaltSync(Number(config.saltValue));
+    const hPassword = hashSync(password, salt);
+
     await User.findByIdAndUpdate(user._id, {
         $set: {
-            password,
+            hPassword,
             lastPasswordChanged: Date.now(),
         },
     });
@@ -174,11 +178,13 @@ async function changePasswordAndGetToken(user, password) {
     return (await User.findById(user._id)).genToken();
 }
 
-async function checkPasswordCode(username, code, res) {
+async function checkPasswordCode(login, code, res) {
     const response = Object.create(objects.serverResponse);
     const restoreRequired = await RestoreUser.findOne({ restoreCode: code }).populate('userToRestore');
 
-    if (!restoreRequired || restoreRequired.userToRestore.username !== username) {
+    if (!restoreRequired
+        || (restoreRequired.userToRestore.username !== login
+            && restoreRequired.userToRestore.email !== login)) {
         response.success = false;
         response.msg = 'Code not avaiable for this user';
 
@@ -371,13 +377,13 @@ module.exports = {
         try {
             if (validations.validateInput(req, res)) return;
 
-            const { username } = req.body;
+            const { login } = req.body;
 
-            const userToRestore = await User.findOne({ username });
+            const userToRestore = await findUserByLogin(login);
 
             if (!userToRestore) {
                 response.success = false;
-                response.msg = 'User with this username not found';
+                response.msg = 'User with this login not found';
 
                 res.status(400).json(response);
                 return;
@@ -406,9 +412,9 @@ module.exports = {
         try {
             if (validations.validateInput(req, res)) return;
 
-            const { username, code } = req.body;
+            const { login, code } = req.body;
 
-            if (!checkPasswordCode(username, code, res)) return;
+            if (!(await checkPasswordCode(login, code, res))) return;
 
             response.success = true;
             response.msg = 'Code avaiable for this user';
@@ -426,11 +432,11 @@ module.exports = {
         try {
             if (validations.validateInput(req, res)) return;
 
-            const { username, code, newPassword } = req.body;
+            const { login, code, newPassword } = req.body;
 
-            if (!checkPasswordCode(username, code, res)) return;
+            if (!(await checkPasswordCode(login, code, res))) return;
 
-            const userToRestore = await User.findOne({ username });
+            const userToRestore = await findUserByLogin(login);
             const token = await changePasswordAndGetToken(userToRestore, newPassword);
 
             await RestoreUser.findOneAndDelete({ userToRestore: userToRestore._id });

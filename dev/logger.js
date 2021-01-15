@@ -5,8 +5,8 @@ const logger = createLogger({
     format: format.json(),
     defaultMeta: { date: Date.now() },
     transports: [
-        new transports.File({ filename: '../logs/error.log', level: 'error' }),
-        new transports.File({ filename: '../logs/.log', level: 'info' }),
+        new transports.File({ filename: './logs/error.log', level: 'error' }),
+        new transports.File({ filename: './logs/.log', level: 'info' }),
     ],
 });
 

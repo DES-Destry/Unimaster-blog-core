@@ -34,3 +34,4 @@ dist
 *.rest
 .idea
 coverage
+package-lock.json
