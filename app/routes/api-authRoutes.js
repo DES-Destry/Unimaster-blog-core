@@ -52,7 +52,7 @@ module.exports = (router) => {
         content: users data without hash password and jwt token.
 
         -Potential errors:
-        401(Incorrect login or password. See more in response errorMsg)
+        401(Incorrect login or password. See more in response msg)
         500(Unknown: see more in response content)
 
         -Example:
@@ -65,4 +65,26 @@ module.exports = (router) => {
         }
     */
     router.post('/login', controller.login);
+
+    /*
+        -Functional:
+        Check users authorization token.
+
+        -Usage:
+        Made POST request to "{hostname}/api/auth/check"
+        Request must be authenticated. Don't forget for "Authorization: Bearer {some_token}" header.
+
+        -Success response:
+        msg: 'Successful authorization'.
+        content: nothing.
+
+        -Potential errors:
+        401(Incorrect auth token)
+        500(Unknown: see more in response content)
+
+        -Example:
+        POST http://localhost:3000/api/auth/check
+        Authorization: Bearer {token}
+    */
+    router.post('/check', controller.auth, controller.checkAuth);
 };

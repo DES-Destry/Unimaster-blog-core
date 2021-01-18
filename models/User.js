@@ -90,7 +90,6 @@ uSchema.methods.checkPass = function (pass) {
     }
     catch (err) {
         logger.logError(`CHECK PASS ERROR: ${err.message}`);
-
         return false;
     }
 };

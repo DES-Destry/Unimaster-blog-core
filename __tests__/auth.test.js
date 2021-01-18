@@ -4,17 +4,28 @@ const mongo = require('../lib/mongo-config');
 const User = require('../models/User');
 const VerificationUser = require('../models/VerificationUser');
 
+async function clearDB() {
+    await User.deleteMany({ username: 'New mock user' });
+    await User.deleteMany({ username: 'New frst developer' });
+    await User.deleteMany({ username: 'Not existed user' });
+    await User.deleteMany({ email: 'mock@gmail.com' });
+    await User.deleteMany({ email: 'first_dev@gmail.com' });
+}
+
 beforeAll(() => {
     mongo('test', (err) => {
         if (err) throw err;
     });
 });
 
-afterEach(async () => {
-    await User.deleteMany({ email: 'mock@email.com' });
-    await User.deleteMany({ username: 'New mock user' });
-    await User.deleteMany({ username: 'Existed mock user' });
-    await User.deleteMany({ username: 'This user not exist' });
+beforeEach(async (done) => {
+    await clearDB();
+    done();
+});
+
+afterEach(async (done) => {
+    await clearDB();
+    done();
 });
 
 describe('POST /api/auth/registrate', () => {

@@ -149,4 +149,28 @@ module.exports = {
             unknownError(res, err);
         }
     },
+
+    async checkAuth(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            const { currentUser } = req.body;
+
+            if (!currentUser) {
+                response.success = false;
+                response.msg = 'Authentication error';
+
+                res.status(401).json(response);
+                return;
+            }
+
+            response.success = true;
+            response.msg = 'Successful authorization';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
 };

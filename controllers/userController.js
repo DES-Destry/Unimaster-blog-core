@@ -57,13 +57,13 @@ async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
     }
 
     // Check user with current new username.
-    // If user with this username already exists, return HTTP code 400
+    // If user with this username already exists, return HTTP code 403
     const someUser = await User.findOne({ username: newUsername });
     if (someUser) {
         response.success = false;
         response.msg = 'The user with this username already exists';
 
-        res.status(400).json(response);
+        res.status(403).json(response);
         return true;
     }
 
@@ -229,10 +229,9 @@ module.exports = {
             if (await changeUsernameErrorsHandled(newUsername, currentUser, res)) return;
 
             await User.findByIdAndUpdate(currentUser._id, { $set: { username: newUsername } });
-            const newUser = await User.findById(currentUser._id);
+            const changedUser = await User.findById(currentUser._id);
 
-            const { email, username } = newUser;
-            const token = jwt.sign({ email, username }, config.jwtSecret);
+            const token = changedUser.genToken();
 
             response.success = true;
             response.msg = 'Users username has been changed successful';

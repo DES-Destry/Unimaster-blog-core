@@ -7,6 +7,14 @@ const User = require('../models/User');
     Verification sending endpoints not tested because they send email and I can't write a test for it.
 */
 
+async function clearDB() {
+    await User.deleteMany({ username: 'New mock user' });
+    await User.deleteMany({ username: 'New frst developer' });
+    await User.deleteMany({ username: 'Not existed user' });
+    await User.deleteMany({ email: 'mock@gmail.com' });
+    await User.deleteMany({ email: 'first_dev@gmail.com' });
+}
+
 async function createMockUserAndGetToken() {
     const username = 'New mock user';
     const email = 'mock@gmail.com';
@@ -41,12 +49,14 @@ beforeAll(() => {
     });
 });
 
-afterEach(async () => {
-    await User.deleteMany({ username: 'New mock user' });
-    await User.deleteMany({ username: 'New frst developer' });
-    await User.deleteMany({ username: 'Not existed user' });
-    await User.deleteMany({ email: 'mock@gmail.com' });
-    await User.deleteMany({ email: 'first_dev@gmail.com' });
+beforeEach(async (done) => {
+    await clearDB();
+    done();
+});
+
+afterEach(async (done) => {
+    await clearDB();
+    done();
 });
 
 describe('PUT /api/user/description', () => {
@@ -469,6 +479,181 @@ describe('DELETE /api/user/', () => {
         catch (err) {
             expect(err.response.status).toBe(403);
             expect(err.response.data.success).toBe(false);
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+});
+
+describe('PUT /api/user/username', () => {
+    it('Normal username changing', async (done) => {
+        const server = app.listen(4014);
+        const newUsername = 'New username';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4014/api/user/username',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newUsername },
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.data.success).toBe(true);
+            expect(response.data.content.token).toBeDefined();
+
+            const checkAuth = await axios({
+                url: 'http://localhost:4014/api/auth/check',
+                method: 'post',
+                headers: {
+                    'Authorization': `Bearer ${response.data.content.token}`,
+                },
+            });
+
+            expect(checkAuth.status).toBe(200);
+            expect(checkAuth.data.success).toBe(true);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(200);
+            expect(err.response.data.success).toBe(true);
+            expect(err.response.data.token).toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Username changing: empty stress test', async (done) => {
+        const server = app.listen(4015);
+        const newUsername = '';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4015/api/user/username',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newUsername },
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.data.success).toBe(false);
+            expect(response.data.token).not.toBeDefined();
+        }
+        catch (err) {
+            expect(err.response.status).toBe(400);
+            expect(err.response.data.success).toBe(false);
+            expect(err.response.data.token).not.toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Username changing: empty stress test', async (done) => {
+        const server = app.listen(4016);
+        const newUsername = 'mock@gmail.com';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4016/api/user/username',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newUsername },
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.data.success).toBe(false);
+            expect(response.data.token).not.toBeDefined();
+        }
+        catch (err) {
+            expect(err.response.status).toBe(400);
+            expect(err.response.data.success).toBe(false);
+            expect(err.response.data.token).not.toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Username changing: same usernames stress test', async (done) => {
+        const server = app.listen(4017);
+        const newUsername = 'New frst developer';
+
+        try {
+            await createFirstDevAndGetToken();
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4017/api/user/username',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newUsername },
+            });
+
+            expect(response.status).toBe(403);
+            expect(response.data.success).toBe(false);
+            expect(response.data.token).not.toBeDefined();
+        }
+        catch (err) {
+            expect(err.response.status).toBe(403);
+            expect(err.response.data.success).toBe(false);
+            expect(err.response.data.token).not.toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Username changing: old username stress test', async (done) => {
+        const server = app.listen(4018);
+        const newUsername = 'New mock user';
+
+        try {
+            await createFirstDevAndGetToken();
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4018/api/user/username',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newUsername },
+            });
+
+            expect(response.status).toBe(418);
+            expect(response.data.success).toBe(false);
+            expect(response.data.token).not.toBeDefined();
+        }
+        catch (err) {
+            expect(err.response.status).toBe(418);
+            expect(err.response.data.success).toBe(false);
+            expect(err.response.data.token).not.toBeDefined();
         }
         finally {
             server.close();
