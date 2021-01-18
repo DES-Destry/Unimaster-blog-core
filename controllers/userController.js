@@ -73,7 +73,7 @@ async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
 async function deleteUserErrorsHandled(findedUser, currentUser, password, res) {
     const response = Object.create(objects.serverResponse);
 
-    if (currentUser._id !== findedUser._id || currentUser.privilege !== 'First Developer') {
+    if ((!findedUser || !currentUser._id.equals(findedUser._id)) && currentUser.privilege !== 'First Developer') {
         response.success = false;
         response.msg = 'Access denied';
 
@@ -81,7 +81,7 @@ async function deleteUserErrorsHandled(findedUser, currentUser, password, res) {
         return true;
     }
 
-    if (!findedUser || (!findedUser.checkPass(password) || currentUser.privilege !== 'First Developer')) {
+    if ((!findedUser || !findedUser.checkPass(password)) && currentUser.privilege !== 'First Developer') {
         response.success = false;
         response.msg = 'Users credentials not correct';
 

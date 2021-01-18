@@ -1,19 +1,52 @@
 const axios = require('axios');
-const config = require('../lib/config');
 const app = require('../app');
 const mongo = require('../lib/mongo-config');
-
-const token = config.dMockUser;
+const User = require('../models/User');
 
 /*
-    Username and password changing endpoints not tested because they change users token and broke future tests running.
-    Verification sending endpoints not tested because they only send email and I can't write a test for it.
+    Verification sending endpoints not tested because they send email and I can't write a test for it.
 */
+
+async function createMockUserAndGetToken() {
+    const username = 'New mock user';
+    const email = 'mock@gmail.com';
+    const password = '123456789';
+
+    const user = new User({ username, email, password });
+    user.save();
+
+    return user.genToken();
+}
+
+async function createFirstDevAndGetToken() {
+    const username = 'New frst developer';
+    const email = 'first_dev@gmail.com';
+    const privilege = 'First Developer';
+    const password = '123456789';
+
+    const user = new User({
+        username,
+        email,
+        privilege,
+        password,
+    });
+    user.save();
+
+    return user.genToken();
+}
 
 beforeAll(() => {
     mongo('test', (err) => {
         if (err) throw err;
     });
+});
+
+afterEach(async () => {
+    await User.deleteMany({ username: 'New mock user' });
+    await User.deleteMany({ username: 'New frst developer' });
+    await User.deleteMany({ username: 'Not existed user' });
+    await User.deleteMany({ email: 'mock@gmail.com' });
+    await User.deleteMany({ email: 'first_dev@gmail.com' });
 });
 
 describe('PUT /api/user/description', () => {
@@ -22,6 +55,8 @@ describe('PUT /api/user/description', () => {
         const newDescription = 'Some very cool description!';
 
         try {
+            const token = await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4001/api/user/description',
                 method: 'put',
@@ -52,6 +87,8 @@ describe('PUT /api/user/description', () => {
         const newDescription = '';
 
         try {
+            const token = await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4002/api/user/description',
                 method: 'put',
@@ -82,6 +119,8 @@ describe('PUT /api/user/location', () => {
         const newLocation = 'North Korea';
 
         try {
+            const token = await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4003/api/user/location',
                 method: 'put',
@@ -109,10 +148,14 @@ describe('PUT /api/user/location', () => {
 describe('PUT /api/user/privilege', () => {
     it('Users privilege changing to Moderator', async (done) => {
         const server = app.listen(4004);
+
         const newPrivilege = 'Moderator';
-        const usernameToSet = 'User Privelege Test'; // Mock user with this username has been added in my database
+        const usernameToSet = 'New mock user';
 
         try {
+            const token = await createFirstDevAndGetToken();
+            await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4004/api/user/privilege',
                 method: 'put',
@@ -142,6 +185,9 @@ describe('PUT /api/user/privilege', () => {
         const usernameToSet = '';
 
         try {
+            const token = await createFirstDevAndGetToken();
+            await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4005/api/user/privilege',
                 method: 'put',
@@ -168,9 +214,12 @@ describe('PUT /api/user/privilege', () => {
     it('Users privilege changing scoreable privilege stress test', async (done) => {
         const server = app.listen(4006);
         const newPrivilege = 'Proffesional';
-        const usernameToSet = 'User Privelege Test';
+        const usernameToSet = 'New mock user';
 
         try {
+            const token = await createFirstDevAndGetToken();
+            await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4006/api/user/privilege',
                 method: 'put',
@@ -194,12 +243,15 @@ describe('PUT /api/user/privilege', () => {
         }
     });
 
-    it('Users privilege changing incorrect username stress test', async (done) => {
+    it('Users privilege changing incorrect privilege stress test', async (done) => {
         const server = app.listen(4007);
         const newPrivilege = 'Proffessional';
-        const usernameToSet = 'User Privelege Test';
+        const usernameToSet = 'New mock user';
 
         try {
+            const token = await createFirstDevAndGetToken();
+            await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4007/api/user/privilege',
                 method: 'put',
@@ -225,12 +277,14 @@ describe('PUT /api/user/privilege', () => {
         }
     });
 
-    it('Users privilege changing incorrect privilege stress test', async (done) => {
+    it('Users privilege changing incorrect username stress test', async (done) => {
         const server = app.listen(4008);
         const newPrivilege = 'Proffesional';
-        const usernameToSet = 'Not existed user'; // User with this username not exist in my mock database
+        const usernameToSet = 'Not existed user';
 
         try {
+            const token = await createFirstDevAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4008/api/user/privilege',
                 method: 'put',
@@ -268,6 +322,8 @@ describe('POST /api/user/links', () => {
         ];
 
         try {
+            const token = await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4009/api/user/links',
                 method: 'post',
@@ -296,6 +352,8 @@ describe('POST /api/user/links', () => {
         const links = 'Some rubbish';
 
         try {
+            const token = await createMockUserAndGetToken();
+
             const response = await axios({
                 url: 'http://localhost:4010/api/user/links',
                 method: 'post',
@@ -311,6 +369,105 @@ describe('POST /api/user/links', () => {
         }
         catch (err) {
             expect(err.response.status).toBe(400);
+            expect(err.response.data.success).toBe(false);
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+});
+
+describe('DELETE /api/user/', () => {
+    it('Normal deletion', async (done) => {
+        const server = app.listen(4011);
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4011/api/user/',
+                method: 'delete',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { login: 'mock@gmail.com', password: '123456789' },
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.data.success).toBe(true);
+            expect(response.data.content.deleted.username).toBe('New mock user');
+            expect(response.data.content.deleted.email).toBe('mock@gmail.com');
+        }
+        catch (err) {
+            expect(err.response.status).toBe(200);
+            expect(err.response.data.success).toBe(true);
+            expect(err.response.data.content.deleted.username).toBe('New mock user');
+            expect(err.response.data.content.deleted.email).toBe('mock@gmail.com');
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Deletion by First Developer', async (done) => {
+        const server = app.listen(4012);
+
+        try {
+            const token = await createFirstDevAndGetToken();
+            await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4012/api/user/',
+                method: 'delete',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { login: 'mock@gmail.com', password: '123456789' },
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.data.success).toBe(true);
+            expect(response.data.content.deleted.username).toBe('New mock user');
+            expect(response.data.content.deleted.email).toBe('mock@gmail.com');
+        }
+        catch (err) {
+            expect(err.response.status).toBe(200);
+            expect(err.response.data.success).toBe(true);
+            expect(err.response.data.content.deleted.username).toBe('New mock user');
+            expect(err.response.data.content.deleted.email).toBe('mock@gmail.com');
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Deletion with reply with incorrect credentials', async (done) => {
+        const server = app.listen(4013);
+
+        try {
+            const token = await createMockUserAndGetToken();
+            await createFirstDevAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4013/api/user/',
+                method: 'delete',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { login: 'first_dev@gmail.com', password: 'Some rubbish' },
+            });
+
+            expect(response.status).toBe(403);
+            expect(response.data.success).toBe(false);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(403);
             expect(err.response.data.success).toBe(false);
         }
         finally {

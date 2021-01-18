@@ -10,11 +10,11 @@ beforeAll(() => {
     });
 });
 
-beforeEach(async () => {
-    await User.deleteOne({ email: 'mock@email.com' });
-    await User.deleteOne({ username: 'New mock user' });
-    await User.deleteOne({ username: 'Existed mock user' });
-    await User.deleteOne({ username: 'This user not exist' });
+afterEach(async () => {
+    await User.deleteMany({ email: 'mock@email.com' });
+    await User.deleteMany({ username: 'New mock user' });
+    await User.deleteMany({ username: 'Existed mock user' });
+    await User.deleteMany({ username: 'This user not exist' });
 });
 
 describe('POST /api/auth/registrate', () => {
@@ -39,7 +39,7 @@ describe('POST /api/auth/registrate', () => {
             expect(response.data.success).toBe(true);
         }
         catch (err) {
-            expect(err.statusCode).toBe(200);
+            expect(err.response.status).toBe(200);
         }
         finally {
             const user = await User.findOne({ username });
@@ -287,7 +287,7 @@ describe('POST /api/auth/login', () => {
             const inputPassword = 'WRONG PASSWORD'; // Not 123456789
 
             const response = await axios({
-                url: 'http://localhost:5005/api/auth/login',
+                url: 'http://localhost:5008/api/auth/login',
                 method: 'post',
                 headers: {
                     'Content-Type': 'application/json',
