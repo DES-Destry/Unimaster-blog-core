@@ -19,8 +19,14 @@ async function createMockUserAndGetToken() {
     const username = 'New mock user';
     const email = 'mock@gmail.com';
     const password = '123456789';
+    const verified = true;
 
-    const user = new User({ username, email, password });
+    const user = new User({
+        username,
+        email,
+        password,
+        verified,
+    });
     user.save();
 
     return user.genToken();
@@ -31,12 +37,14 @@ async function createFirstDevAndGetToken() {
     const email = 'first_dev@gmail.com';
     const privilege = 'First Developer';
     const password = '123456789';
+    const verified = true;
 
     const user = new User({
         username,
         email,
         privilege,
         password,
+        verified,
     });
     user.save();
 
@@ -523,7 +531,7 @@ describe('PUT /api/user/username', () => {
         catch (err) {
             expect(err.response.status).toBe(200);
             expect(err.response.data.success).toBe(true);
-            expect(err.response.data.token).toBeDefined();
+            expect(err.response.data.content).toBeDefined();
         }
         finally {
             server.close();
@@ -550,12 +558,10 @@ describe('PUT /api/user/username', () => {
 
             expect(response.status).toBe(400);
             expect(response.data.success).toBe(false);
-            expect(response.data.token).not.toBeDefined();
         }
         catch (err) {
             expect(err.response.status).toBe(400);
             expect(err.response.data.success).toBe(false);
-            expect(err.response.data.token).not.toBeDefined();
         }
         finally {
             server.close();
@@ -582,12 +588,10 @@ describe('PUT /api/user/username', () => {
 
             expect(response.status).toBe(400);
             expect(response.data.success).toBe(false);
-            expect(response.data.token).not.toBeDefined();
         }
         catch (err) {
             expect(err.response.status).toBe(400);
             expect(err.response.data.success).toBe(false);
-            expect(err.response.data.token).not.toBeDefined();
         }
         finally {
             server.close();
@@ -615,12 +619,12 @@ describe('PUT /api/user/username', () => {
 
             expect(response.status).toBe(403);
             expect(response.data.success).toBe(false);
-            expect(response.data.token).not.toBeDefined();
+            expect(response.data.content).not.toBeDefined();
         }
         catch (err) {
             expect(err.response.status).toBe(403);
             expect(err.response.data.success).toBe(false);
-            expect(err.response.data.token).not.toBeDefined();
+            expect(err.response.data.content).not.toBeDefined();
         }
         finally {
             server.close();
@@ -633,7 +637,6 @@ describe('PUT /api/user/username', () => {
         const newUsername = 'New mock user';
 
         try {
-            await createFirstDevAndGetToken();
             const token = await createMockUserAndGetToken();
 
             const response = await axios({
@@ -648,12 +651,186 @@ describe('PUT /api/user/username', () => {
 
             expect(response.status).toBe(418);
             expect(response.data.success).toBe(false);
-            expect(response.data.token).not.toBeDefined();
+            expect(response.data.content).not.toBeDefined();
         }
         catch (err) {
             expect(err.response.status).toBe(418);
             expect(err.response.data.success).toBe(false);
-            expect(err.response.data.token).not.toBeDefined();
+            expect(err.response.data.content).not.toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+});
+
+describe('PUT /api/auth/password', () => {
+    it('Normal password changing', async (done) => {
+        const server = app.listen(4019);
+        const oldPassword = '123456789';
+        const newPassword = '987654321';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4019/api/user/password',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { oldPassword, newPassword },
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.data.success).toBe(true);
+            expect(response.data.content.token).toBeDefined();
+
+            const checkAuth = await axios({
+                url: 'http://localhost:4019/api/auth/check',
+                method: 'post',
+                headers: {
+                    'Authorization': `Bearer ${response.data.content.token}`,
+                },
+            });
+
+            expect(checkAuth.status).toBe(200);
+            expect(checkAuth.data.success).toBe(true);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(200);
+            expect(err.response.data.success).toBe(true);
+            expect(err.response.data.content.token).toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Password changing: empty stress test', async (done) => {
+        const server = app.listen(4020);
+        const oldPassword = '';
+        const newPassword = '';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4020/api/user/password',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { oldPassword, newPassword },
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.data.success).toBe(false);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(400);
+            expect(err.response.data.success).toBe(false);
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Password changing: short new password stress test', async (done) => {
+        const server = app.listen(4021);
+        const oldPassword = '123456789';
+        const newPassword = '123';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4021/api/user/password',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { oldPassword, newPassword },
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.data.success).toBe(false);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(400);
+            expect(err.response.data.success).toBe(false);
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Password changing: same old and new password stress test', async (done) => {
+        const server = app.listen(4022);
+        const oldPassword = '123456789';
+        const newPassword = '123456789';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4022/api/user/password',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { oldPassword, newPassword },
+            });
+
+            expect(response.status).toBe(403);
+            expect(response.data.success).toBe(false);
+            expect(response.data.content).not.toBeDefined();
+        }
+        catch (err) {
+            expect(err.response.status).toBe(403);
+            expect(err.response.data.success).toBe(false);
+            expect(err.response.data.content).not.toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Password changing: wrong old password stress test', async (done) => {
+        const server = app.listen(4023);
+        const oldPassword = '987654321';
+        const newPassword = '123456789';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4023/api/user/password',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { oldPassword, newPassword },
+            });
+
+            expect(response.status).toBe(403);
+            expect(response.data.success).toBe(false);
+            expect(response.data.content).not.toBeDefined();
+        }
+        catch (err) {
+            expect(err.response.status).toBe(403);
+            expect(err.response.data.success).toBe(false);
+            expect(err.response.data.content).not.toBeDefined();
         }
         finally {
             server.close();

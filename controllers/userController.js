@@ -349,7 +349,9 @@ module.exports = {
 
             const { currentUser, oldPassword, newPassword } = req.body;
 
-            if (!currentUser.checkPass(oldPassword) || !currentUser.verified) {
+            if (!currentUser.checkPass(oldPassword)
+            || !currentUser.verified
+            || oldPassword === newPassword) {
                 response.success = false;
                 response.msg = 'Access denied';
 
