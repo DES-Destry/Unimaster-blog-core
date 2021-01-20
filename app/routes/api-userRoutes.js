@@ -55,8 +55,9 @@ module.exports = (router) => {
 
         -Potential errors:
         400(Validation error. See info about incorrect fields in response content)
-           (New username not correct. The old and new username not different or user with this username already exists)
         401(Authentication error. Incorrect token)
+        403(User with this username already exist or user change username 30 days ago or earler)
+        418(New username not correct. The old and new username not different)
         500(Unknown: see more in response content)
 
         -Example:
@@ -69,6 +70,40 @@ module.exports = (router) => {
         }
     */
     router.put('/username', validations.username, authController.auth, controller.changeUsername);
+
+        /*
+        -Functional:
+        Changing profile alias of blog user.
+
+        -Usage:
+        Made PUT request to "{hostname}/api/user/alias" with request body.
+        Request body contains 1 value: "newAlias".
+        Request body type - JSON. Don't forget for "Content-Type: application/json" header.
+        Request must be authenticated. Don't forget for "Authorization: Bearer {some_token}" header.
+
+        -Server validation:
+        newAlias -> not longer than 20 symbols.
+
+        -Success response:
+        msg: 'Users alias has been changed successful'
+        content: nothing.
+
+        -Potential errors:
+        400(Validation error. See info about incorrect fields in response content)
+        401(Authentication error. Incorrect token)
+        418(New alias and old are same)
+        500(Unknown: see more in response content)
+
+        -Example:
+        PUT http://localhost:3000/api/user/alias
+        Content-Type: application/json
+        Authorization: Bearer {token}
+
+        {
+           "newAlias": "Banana"
+        }
+    */
+    router.put('/alias', validations.alias, authController.auth, controller.changeAlias);
 
     /*
         -Functional:

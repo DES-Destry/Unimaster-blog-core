@@ -2,12 +2,22 @@ const axios = require('axios');
 const app = require('../app');
 const mongo = require('../lib/mongo-config');
 const User = require('../models/User');
+const UsernameChangeList = require('../models/UsernameChangeList');
 
 /*
     Verification sending endpoints not tested because they send email and I can't write a test for it.
 */
 
 async function clearDB() {
+    const allChanges = await UsernameChangeList.find().populate('user');
+    allChanges.forEach(async (change) => {
+        if (change.user.username === 'New mock user'
+        || change.user.username === 'New frst developer'
+        || change.user.username === 'New username') {
+            await UsernameChangeList.findByIdAndDelete(change._id);
+        }
+    });
+
     await User.deleteMany({ username: 'New mock user' });
     await User.deleteMany({ username: 'New frst developer' });
     await User.deleteMany({ username: 'Not existed user' });
@@ -19,12 +29,14 @@ async function createMockUserAndGetToken() {
     const username = 'New mock user';
     const email = 'mock@gmail.com';
     const password = '123456789';
+    const alias = 'MockyMocky';
     const verified = true;
 
     const user = new User({
         username,
         email,
         password,
+        alias,
         verified,
     });
     user.save();
@@ -619,12 +631,10 @@ describe('PUT /api/user/username', () => {
 
             expect(response.status).toBe(403);
             expect(response.data.success).toBe(false);
-            expect(response.data.content).not.toBeDefined();
         }
         catch (err) {
             expect(err.response.status).toBe(403);
             expect(err.response.data.success).toBe(false);
-            expect(err.response.data.content).not.toBeDefined();
         }
         finally {
             server.close();
@@ -831,6 +841,128 @@ describe('PUT /api/auth/password', () => {
             expect(err.response.status).toBe(403);
             expect(err.response.data.success).toBe(false);
             expect(err.response.data.content).not.toBeDefined();
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+});
+
+describe('PUT /api/user/alias', () => {
+    it('Normal alias changing', async (done) => {
+        const server = app.listen(4024);
+        const newAlias = 'NewMockyMocky';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4024/api/user/alias',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newAlias },
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.data.success).toBe(true);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(200);
+            expect(err.response.data.success).toBe(true);
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Normal alias changing: clear', async (done) => {
+        const server = app.listen(4025);
+        const newAlias = '';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4025/api/user/alias',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newAlias },
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.data.success).toBe(true);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(200);
+            expect(err.response.data.success).toBe(true);
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Alias changing: very long stress test', async (done) => {
+        const server = app.listen(4026);
+        const newAlias = 'Hey. I\'m a SIMP...  Sniper monkey.  Yah, my alias is fucking BIG!!!';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4026/api/user/alias',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newAlias },
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.data.success).toBe(false);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(400);
+            expect(err.response.data.success).toBe(false);
+        }
+        finally {
+            server.close();
+            done();
+        }
+    });
+
+    it('Alias changing: old and new alias same stress test', async (done) => {
+        const server = app.listen(4027);
+        const newAlias = 'MockyMocky';
+
+        try {
+            const token = await createMockUserAndGetToken();
+
+            const response = await axios({
+                url: 'http://localhost:4027/api/user/alias',
+                method: 'put',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                data: { newAlias },
+            });
+
+            expect(response.status).toBe(418);
+            expect(response.data.success).toBe(false);
+        }
+        catch (err) {
+            expect(err.response.status).toBe(418);
+            expect(err.response.data.success).toBe(false);
         }
         finally {
             server.close();

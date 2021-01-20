@@ -11,6 +11,11 @@ const uSchema = new Schema({
         required: true,
         unique: true,
     },
+    alias: {
+        type: String,
+        required: false,
+        default: '',
+    },
     // TODO: multiple emails
     email: {
         type: String,

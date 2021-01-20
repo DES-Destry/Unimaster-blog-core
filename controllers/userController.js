@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { join, dirname } = require('path');
@@ -7,6 +6,7 @@ const { genSaltSync, hashSync } = require('bcrypt');
 const User = require('../models/User');
 const VerificationUser = require('../models/VerificationUser');
 const RestoreUser = require('../models/RestoreUser');
+const UsernameChangeList = require('../models/UsernameChangeList');
 const config = require('../lib/config');
 const { objects, validations, unknownError } = require('../lib/utils');
 
@@ -46,6 +46,7 @@ async function findUserByLogin(login) {
 
 async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
     const response = Object.create(objects.serverResponse);
+    let diffDays = 31; // 31 - for pass (diffDays < 30) if username never changing
 
     // The old and new username must be different
     if (currentUser.username === newUsername) {
@@ -59,9 +60,24 @@ async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
     // Check user with current new username.
     // If user with this username already exists, return HTTP code 403
     const someUser = await User.findOne({ username: newUsername });
-    if (someUser) {
+
+    // Check last username changing
+    const changeList = await UsernameChangeList.find({ user: currentUser._id })
+    .sort({ changingDate: -1 });
+
+    if (changeList[0]) {
+        const lastChangeDate = changeList[0].changingDate;
+        const oneDay = 86400000; // hours*minutes*seconds*milliseconds
+
+        diffDays = Math.round(Math.abs((lastChangeDate.getTime() - new Date().getTime()) / oneDay));
+    }
+
+    // If user with this username already exists
+    // Or this user change username 30 days ago or later
+    if (someUser || diffDays < 30) {
         response.success = false;
         response.msg = 'The user with this username already exists';
+        response.content = { left: 30 - diffDays };
 
         res.status(403).json(response);
         return true;
@@ -228,6 +244,12 @@ module.exports = {
             const { newUsername, currentUser } = req.body;
             if (await changeUsernameErrorsHandled(newUsername, currentUser, res)) return;
 
+            new UsernameChangeList({
+                user: currentUser._id,
+                newUsername,
+                oldUsername: currentUser.username,
+            }).save();
+
             await User.findByIdAndUpdate(currentUser._id, { $set: { username: newUsername } });
             const changedUser = await User.findById(currentUser._id);
 
@@ -236,6 +258,38 @@ module.exports = {
             response.success = true;
             response.msg = 'Users username has been changed successful';
             response.content = { token };
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async changeAlias(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            if (validations.validateInput(req, res)) return;
+
+            const { newAlias, currentUser } = req.body;
+
+            if (newAlias === currentUser.alias) {
+                response.success = false;
+                response.msg = 'Current alias and old alias are same';
+
+                res.status(418).json(response);
+                return;
+            }
+
+            await User.findByIdAndUpdate(currentUser._id, {
+                $set: {
+                    alias: newAlias,
+                },
+            });
+
+            response.success = true;
+            response.msg = 'Users alias has been changed successful';
 
             res.json(response);
         }
