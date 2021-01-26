@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const multer = require('multer');
 const nodemailer = require('nodemailer');
 const { join, dirname } = require('path');
 const { genSaltSync, hashSync } = require('bcrypt');
@@ -9,6 +10,17 @@ const RestoreUser = require('../models/RestoreUser');
 const UsernameChangeList = require('../models/UsernameChangeList');
 const config = require('../lib/config');
 const { objects, validations, unknownError } = require('../lib/utils');
+
+const storage = multer.diskStorage({
+    destination(req, file, fn) {
+        fn(null, config.avatarPath);
+    },
+    filename(req, file, fn) {
+        console.log(req.user);
+        fn(null, `${req.user?.username}.jpeg`);
+    },
+});
+const upload = multer({ storage }).single('file');
 
 const currentUrl = config.currentHost;
 const transporter = nodemailer.createTransport({
@@ -581,6 +593,40 @@ module.exports = {
         }
         catch (err) {
             unknownError(res, err);
+        }
+    },
+
+    async uploadAvatar(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            // console.log(req.file);
+            // req.file.filename = req.body.currentUser;
+            // if (req.file === undefined) {
+            //     response.success = false;
+            //     response.msg = 'You must select an image';
+
+            //     res.status(400).json(response);
+            // }
+
+            // response.success = true;
+            // response.msg = 'Avatar has been updated successful';
+
+            // res.json(response);
+            upload(req, res, err => {
+                if (err) {
+                    unknownError(res, err);
+                }
+                console.log(req.user);
+                response.success = true;
+                response.msg = 'Avatar has been updated successful';
+
+                res.json(response);
+            });
+        }
+        catch (err) {
+            unknownError(res, err);
+            console.log(err);
         }
     },
 };

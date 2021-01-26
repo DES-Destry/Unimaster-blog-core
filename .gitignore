@@ -34,4 +34,5 @@ dist
 *.rest
 .idea
 coverage
+avatars
 package-lock.json

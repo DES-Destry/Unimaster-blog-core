@@ -215,9 +215,10 @@ module.exports = (router) => {
     */
     router.post('/links', validations.links, authController.auth, controller.rewriteLinks);
 
-    // Not in use yet
-    router.put('/avatar', (req, res) => res.send('Not in use yet'));
-    // Not in use yet
+    router.get('/avatar', (req, res) => res.send('Not in use yet'));
+
+    router.put('/avatar', authController.auth, controller.uploadAvatar);
+
     router.delete('/avatar', (req, res) => res.send('Not in use yet'));
 
     /*

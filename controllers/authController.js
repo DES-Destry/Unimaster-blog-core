@@ -73,6 +73,7 @@ module.exports = {
 
             if (user) {
                 req.body.currentUser = user;
+                req.user = user;
                 next();
                 return;
             }
