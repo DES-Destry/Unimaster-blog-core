@@ -1,7 +1,9 @@
+const fs = require('fs');
+const sharp = require('sharp');
 const crypto = require('crypto');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
-const { join, dirname } = require('path');
+const { join, dirname, extname } = require('path');
 const { genSaltSync, hashSync } = require('bcrypt');
 
 const User = require('../models/User');
@@ -11,16 +13,32 @@ const UsernameChangeList = require('../models/UsernameChangeList');
 const config = require('../lib/config');
 const { objects, validations, unknownError } = require('../lib/utils');
 
+sharp.cache({ files: 0 });
+
 const storage = multer.diskStorage({
     destination(req, file, fn) {
         fn(null, config.avatarPath);
     },
     filename(req, file, fn) {
-        console.log(req.user);
-        fn(null, `${req.user?.username}.jpeg`);
+        fn(null, `${req.user?.username}`);
     },
 });
-const upload = multer({ storage }).single('file');
+
+const fileFilter = function (req, file, fn) {
+    const filetypes = /jpeg|jpg|png|gif/;
+
+    const rightExtname = filetypes.test(extname(file.originalname).toLowerCase());
+    const rightMimetype = filetypes.test(file.mimetype);
+
+    if (rightExtname && rightMimetype) {
+        fn(null, true);
+    }
+    else {
+        fn('Images only!(jpeg, jpg, png, gif)');
+    }
+}
+
+const upload = multer({ storage, fileFilter }).single('file');
 
 const currentUrl = config.currentHost;
 const transporter = nodemailer.createTransport({
@@ -599,34 +617,52 @@ module.exports = {
     async uploadAvatar(req, res) {
         const response = Object.create(objects.serverResponse);
 
+
         try {
-            // console.log(req.file);
-            // req.file.filename = req.body.currentUser;
-            // if (req.file === undefined) {
-            //     response.success = false;
-            //     response.msg = 'You must select an image';
-
-            //     res.status(400).json(response);
-            // }
-
-            // response.success = true;
-            // response.msg = 'Avatar has been updated successful';
-
-            // res.json(response);
             upload(req, res, err => {
-                if (err) {
-                    unknownError(res, err);
-                }
-                console.log(req.user);
-                response.success = true;
-                response.msg = 'Avatar has been updated successful';
+                if (err) return unknownError(res, err);
 
+                fs.unlink(join(config.avatarPath, req.user?.username + '.jpeg'), _ => {
+                    sharp(join(config.avatarPath, req.user?.username))
+                    .resize(250, 250)
+                    .jpeg()
+                    .toFile(join(config.avatarPath, req.user?.username + '.jpeg'))
+                    .then(_ => {
+                        fs.unlink(join(config.avatarPath, req.user?.username), _ => {});
+                    });
+
+                    response.success = true;
+                    response.msg = 'Avatar has been updated successful';
+                
+                    res.json(response);
+                });
+            });
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async deleteAvatar(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            fs.unlink(join(config.avatarPath, req.user?.username + '.jpeg'), err => {
+                if (err) {
+                    response.success = false;
+                    response.msg = 'Avatar already deleted';
+
+                    return res.status(418).json(response);
+                }
+
+                response.success = true;
+                response.msg = 'Avatar has been deleted successful';
+    
                 res.json(response);
             });
         }
         catch (err) {
             unknownError(res, err);
-            console.log(err);
         }
     },
 };
