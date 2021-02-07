@@ -280,16 +280,22 @@ module.exports = {
                 oldUsername: currentUser.username,
             }).save();
 
-            await User.findByIdAndUpdate(currentUser._id, { $set: { username: newUsername } });
-            const changedUser = await User.findById(currentUser._id);
+            fs.rename(join(config.avatarPath, `${currentUser.username}.jpeg`), join(config.avatarPath, `${newUsername}.jpeg`), err => {
+                if (err) {
+                    response.content.successAvatarChange = false;
+                }
 
-            const token = changedUser.genToken();
-
-            response.success = true;
-            response.msg = 'Users username has been changed successful';
-            response.content = { token };
-
-            res.json(response);
+                await User.findByIdAndUpdate(currentUser._id, { $set: { username: newUsername } });
+                const changedUser = await User.findById(currentUser._id);
+    
+                const token = changedUser.genToken();
+    
+                response.success = true;
+                response.msg = 'Users username has been changed successful';
+                response.content = { token };
+    
+                res.json(response);
+            });
         }
         catch (err) {
             unknownError(res, err);
