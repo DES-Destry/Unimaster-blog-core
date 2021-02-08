@@ -23,6 +23,7 @@ module.exports = (router) => {
         -Potential errors:
         400(Validation error. See info about incorrect fields in response content)
         401(Authentication error. Incorrect token)
+        403(User not verified)
         500(Unknown: see more in response content)
 
         -Example:
@@ -34,7 +35,7 @@ module.exports = (router) => {
             "newDescription": "Hello. My name is NAME. How are you?"
         }
     */
-    router.put('/description', validations.description, authController.auth, controller.changeDescription);
+    router.put('/description', validations.description, authController.auth, controller.changseDescription);
 
     /*
         -Functional:
@@ -57,6 +58,7 @@ module.exports = (router) => {
         400(Validation error. See info about incorrect fields in response content)
         401(Authentication error. Incorrect token)
         403(User with this username already exist or user change username 30 days ago or earler)
+           (User not verified)
         418(New username not correct. The old and new username not different)
         500(Unknown: see more in response content)
 
@@ -91,6 +93,7 @@ module.exports = (router) => {
         -Potential errors:
         400(Validation error. See info about incorrect fields in response content)
         401(Authentication error. Incorrect token)
+        403(User not verified)
         418(New alias and old are same)
         500(Unknown: see more in response content)
 
@@ -125,6 +128,7 @@ module.exports = (router) => {
         -Potential errors:
         400(Validation error. See info about incorrect fields in response content)
         401(Authentication error. Incorrect token)
+        403(User not verified)
         500(Unknown: see more in response content)
 
         -Example:
@@ -193,6 +197,7 @@ module.exports = (router) => {
         -Potential errors:
         400(Validation error. See info about incorrect fields in response content)
         401(Authentication error. Incorrect token)
+        403(User not verified)
         500(Unknown: see more in response content)
 
         -Example:

@@ -103,8 +103,9 @@ async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
     }
 
     // If user with this username already exists
+    // Or user not verified
     // Or this user change username 30 days ago or later
-    if (someUser || diffDays < 30) {
+    if (someUser || !currentUser.verified || diffDays < 30) {
         response.success = false;
         response.msg = 'The user with this username already exists';
         response.content = { left: 30 - diffDays };
@@ -250,6 +251,14 @@ module.exports = {
 
             const { newDescription, currentUser } = req.body;
 
+            if (!currentUser.verified) {
+                response.success = false;
+                response.msg = 'Access denied. User not verified';
+    
+                res.status(403).json(response);
+                return;
+            }
+
             await User.findByIdAndUpdate(currentUser._id, {
                 $set: { profileDescription: newDescription },
             });
@@ -310,6 +319,14 @@ module.exports = {
 
             const { newAlias, currentUser } = req.body;
 
+            if (!currentUser.verified) {
+                response.success = false;
+                response.msg = 'Access denied. User not verified';
+
+                res.status(403).json(response);
+                return;
+            }
+
             if (newAlias === currentUser.alias) {
                 response.success = false;
                 response.msg = 'Current alias and old alias are same';
@@ -341,6 +358,14 @@ module.exports = {
             if (validations.validateInput(req, res)) return;
 
             const { newLocation, currentUser } = req.body;
+
+            if (!currentUser.verified) {
+                response.success = false;
+                response.msg = 'Access denied. User not verified';
+
+                res.status(403).json(response);
+                return;
+            }
 
             await User.findByIdAndUpdate(currentUser._id, {
                 $set: {
@@ -419,6 +444,15 @@ module.exports = {
             if (validations.validateInput(req, res)) return;
 
             const { currentUser, links } = req.body;
+
+            if (!currentUser.verified) {
+                response.success = false;
+                response.msg = 'Access denied. User not verified';
+
+                res.status(403).json(response);
+                return;
+            }
+            
             await User.findByIdAndUpdate(currentUser._id, { $set: { links } });
 
             response.success = true;
