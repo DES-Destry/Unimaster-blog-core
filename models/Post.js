@@ -1,9 +1,15 @@
 const { Schema, model, Types } = require('mongoose');
 
 const pSchema = new Schema({
-    description: {
+    title: {
         type: String,
         required: true,
+        maxlength: 20,
+    },
+    description: {
+        type: String,
+        required: false,
+        maxlength: 70,
     },
     content: {
         type: String,
@@ -61,6 +67,7 @@ const pSchema = new Schema({
             ],
             answerTo: {
                 type: Types.ObjectId,
+                require: false,
             },
         },
     ],
