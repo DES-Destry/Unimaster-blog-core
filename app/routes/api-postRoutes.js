@@ -4,7 +4,7 @@ const authController = require('../../controllers/authController');
 module.exports = (router) => {
     router.post('/', authController.auth, controller.writeNewPost);
     router.put('/', authController.auth, controller.editPost);
-    router.delete('/');
+    router.delete('/', authController.auth, controller.deletePost);
 
     router.put('/like', authController.auth, controller.likePost);
     router.put('/dislike', authController.auth, controller.dislikePost);
