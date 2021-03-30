@@ -156,14 +156,15 @@ module.exports = {
                 return;
             }
 
-            // Generate token for sending
+            // Generate token and username for sending
             const token = foundUser.genToken();
+            const { username, verified } = foundUser;
 
             // Form a JSON for send to the client.
             // It contains jwt and user data without password
             response.success = true;
             response.msg = 'Loging in has been successful';
-            response.content = { token };
+            response.content = { token, username, verified };
 
             res.json(response);
         }

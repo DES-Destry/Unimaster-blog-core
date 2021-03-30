@@ -50,7 +50,7 @@ module.exports = (router) => {
 
         -Success response:
         msg: 'Loging in has been successful'.
-        content: users data without hash password and jwt token.
+        content: username, verified status and jwt token.
 
         -Potential errors:
         401(Incorrect login or password. See more in response msg)
