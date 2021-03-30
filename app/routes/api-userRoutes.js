@@ -5,6 +5,27 @@ const { validations } = require('../../lib/utils');
 module.exports = (router) => {
     /*
         -Functional:
+        Check if user with this login already exists.
+
+        -Usage:
+        Made GET request to "{hostname}/api/user/exists?login={login}" with request body.
+        Request query contains 1 value: "login".
+
+        -Success responce:
+        msg: 'User with this login has been founded'.
+        content: nothing.
+
+        -Potential errors:
+        404(User with this login not found)
+        500(Unknown: see more in response content)
+
+        -Example:
+        GET http://localhost:3000/api/user/exists?login=Unimaster
+    */
+    router.get('/exists', controller.exists);
+
+    /*
+        -Functional:
         Changing profile description of blog user.
 
         -Usage:
@@ -35,7 +56,7 @@ module.exports = (router) => {
             "newDescription": "Hello. My name is NAME. How are you?"
         }
     */
-    router.put('/description', validations.description, authController.auth, controller.changseDescription);
+    router.put('/description', validations.description, authController.auth, controller.changeDescription);
 
     /*
         -Functional:

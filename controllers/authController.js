@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const VerificationUser = require('../models/VerificationUser');
 const config = require('../lib/config');
+const logger = require('../dev/logger');
 const { objects, validations, unknownError } = require('../lib/utils');
 
 const currentUrl = config.currentHost;
@@ -46,7 +47,11 @@ async function sendVerification(username, email, code) {
     });
 }
 
-async function createUserAndGetToken(username, email, password) {
+async function createUserAndGetTokenWithEmailStatus(username, email, password) {
+    const result = {
+        token: '',
+        emailSended: true,
+    };
     // Create new user
     const createdUser = new User({ username, email, password });
     const id = createdUser._id;
@@ -56,9 +61,17 @@ async function createUserAndGetToken(username, email, password) {
     // Save user and return token
     createdUser.save();
     verificationUser.save();
-    await sendVerification(username, email, verificationCode);
 
-    return createdUser.genToken();
+    try {
+        await sendVerification(username, email, verificationCode);
+    }
+    catch (err) {
+        result.emailSended = false;
+        logger.logError(err);
+    }
+
+    result.token = createdUser.genToken();
+    return result;
 }
 
 module.exports = {
@@ -105,14 +118,22 @@ module.exports = {
                 return;
             }
 
-            const token = await createUserAndGetToken(username, email, password);
+            const {
+                token,
+                emailSended,
+            } = await createUserAndGetTokenWithEmailStatus(username, email, password);
 
             // Form a JSON for send to the client. It contains jwt and user data without password
             response.success = true;
             response.msg = 'User has been created';
-            response.content = { token };
+            response.content = { token, username };
 
-            res.json(response);
+            const statusCode = emailSended ? 200 : 201;
+            if (!emailSended) {
+                response.msg += ', but email not sended';
+            }
+
+            res.status(statusCode).json(response);
         }
         catch (err) {
             unknownError(res, err);

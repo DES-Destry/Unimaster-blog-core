@@ -71,7 +71,7 @@ async function findUserByLogin(login) {
 
     // These two variables cannot be populated at the same time.
     // One of them is necessarily undefined.
-    return findedUserByEmail ? findedUserByEmail : findedUserByUsername;
+    return findedUserByEmail || findedUserByUsername;
 }
 
 async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
@@ -243,6 +243,32 @@ async function checkPasswordCode(login, code, res) {
 }
 
 module.exports = {
+    async exists(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            const { login } = req.query;
+            
+            const user = await findUserByLogin(login);
+
+            if (!user) {
+                response.success = false;
+                response.msg = 'This user doesn\'t exists';
+                
+                res.status(404).json(response);
+                return;
+            }
+
+            response.success = true;
+            response.msg = 'User with this login has been founded';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
     async changeDescription(req, res) {
         const response = Object.create(objects.serverResponse);
 
@@ -289,7 +315,7 @@ module.exports = {
                 oldUsername: currentUser.username,
             }).save();
 
-            fs.rename(join(config.avatarPath, `${currentUser.username}.jpeg`), join(config.avatarPath, `${newUsername}.jpeg`), err => {
+            fs.rename(join(config.avatarPath, `${currentUser.username}.jpeg`), join(config.avatarPath, `${newUsername}.jpeg`), async err => {
                 if (err) {
                     response.content.successAvatarChange = false;
                 }

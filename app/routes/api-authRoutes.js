@@ -18,9 +18,10 @@ module.exports = (router) => {
 
         -Success response:
         msg: 'User has been created'.
-        content: users data without hash password and jwt token.
+        content: username and jwt token.
 
         -Potential errors:
+        201(User created successful, but email not sended)
         400(Validation error. See info about incorrect fields in response content)
         403(User with this email already exists)
         500(Unknown: see more in response content)
