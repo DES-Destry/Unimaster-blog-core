@@ -563,7 +563,7 @@ module.exports = {
         try {
             if (validations.validateInput(req, res)) return;
 
-            const { login, code } = req.body;
+            const { login, code } = req.query;
 
             if (!(await checkPasswordCode(login, code, res))) return;
 

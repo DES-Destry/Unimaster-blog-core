@@ -316,9 +316,8 @@ module.exports = (router) => {
 
         -Usage:
         Made GET request to "{hostname}/api/user/password/restore/check" with request body.
-        Request body contains 2 values: "login", "code".
+        Request paremeters contains 2 values: "login", "code".
         In body.login user can write username or email.
-        Request body type - JSON. Don't forget for "Content-Type: application/json" header.
 
         -Success response:
         msg: 'Code avaiable for this user'
@@ -329,13 +328,7 @@ module.exports = (router) => {
         500(Unknown: see more in response content)
 
         -Example:
-        GET http://localhost:3000/api/user/password/restore/check
-        Content-Type: application/json
-
-        {
-            "login": "Destry", (or email)
-            "code": "000000"
-        }
+        GET http://localhost:3000/api/user/password/restore/check?login=Destry&code=452452
     */
     router.get('/password/restore/check', controller.checkRestoreCode);
 
