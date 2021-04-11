@@ -298,6 +298,7 @@ module.exports = (router) => {
 
         -Potential errors:
         400(User with this login not exists)
+        403(User can get 1 code per 5 minutes - 403 if more.)
         500(Unknown: see more in response content)
 
         -Example:
