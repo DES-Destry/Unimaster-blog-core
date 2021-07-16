@@ -292,6 +292,32 @@ module.exports = {
         }
     },
 
+    async getDataAboutUser(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            const { username } = req.params;
+
+            const userData = await User.findOne({ username });
+
+            if (!userData) {
+                response.success = false;
+                response.msg = 'User not found';
+                
+                res.status(404).json(response);
+            }
+
+            response.success = true;
+            response.msg = 'User has been found';
+            response.content = { userData };
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
     async changeDescription(req, res) {
         const response = Object.create(objects.serverResponse);
 

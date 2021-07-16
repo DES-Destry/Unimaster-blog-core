@@ -26,6 +26,26 @@ module.exports = (router) => {
 
     /*
         -Functional:
+        Returns all data about user
+
+        -Usage:
+        Made GET request to "{hostname}/api/user/{username}" with request body.
+
+        -Success responce:
+        msg: 'User has been found'.
+        content: user data.
+
+        -Potential errors:
+        404(User with this username not found)
+        500(Unknown: see more in response content)
+
+        -Example:
+        GET http://localhost:3000/api/user/Unimaster
+    */
+    router.get('/:username', controller.getDataAboutUser);
+
+    /*
+        -Functional:
         Changing profile description of blog user.
 
         -Usage:
