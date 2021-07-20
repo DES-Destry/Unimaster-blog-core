@@ -5,6 +5,47 @@ const { validations } = require('../../lib/utils');
 module.exports = (router) => {
     /*
         -Functional:
+        Check if user with this login already exists.
+
+        -Usage:
+        Made GET request to "{hostname}/api/user/exists?login={login}" with request body.
+        Request query contains 1 value: "login".
+
+        -Success responce:
+        msg: 'User with this login has been founded'.
+        content: nothing.
+
+        -Potential errors:
+        404(User with this login not found)
+        500(Unknown: see more in response content)
+
+        -Example:
+        GET http://localhost:3000/api/user/exists?login=Unimaster
+    */
+    router.get('/exists', controller.exists);
+
+    /*
+        -Functional:
+        Returns all data about user
+
+        -Usage:
+        Made GET request to "{hostname}/api/user/{username}" with request body.
+
+        -Success responce:
+        msg: 'User has been found'.
+        content: user data.
+
+        -Potential errors:
+        404(User with this username not found)
+        500(Unknown: see more in response content)
+
+        -Example:
+        GET http://localhost:3000/api/user/Unimaster
+    */
+    router.get('/:username', controller.getDataAboutUser);
+
+    /*
+        -Functional:
         Changing profile description of blog user.
 
         -Usage:
@@ -35,7 +76,7 @@ module.exports = (router) => {
             "newDescription": "Hello. My name is NAME. How are you?"
         }
     */
-    router.put('/description', validations.description, authController.auth, controller.changseDescription);
+    router.put('/description', validations.description, authController.auth, controller.changeDescription);
 
     /*
         -Functional:
@@ -277,6 +318,7 @@ module.exports = (router) => {
 
         -Potential errors:
         400(User with this login not exists)
+        403(User can get 1 code per 5 minutes - 403 if more.)
         500(Unknown: see more in response content)
 
         -Example:
@@ -295,9 +337,8 @@ module.exports = (router) => {
 
         -Usage:
         Made GET request to "{hostname}/api/user/password/restore/check" with request body.
-        Request body contains 2 values: "login", "code".
+        Request paremeters contains 2 values: "login", "code".
         In body.login user can write username or email.
-        Request body type - JSON. Don't forget for "Content-Type: application/json" header.
 
         -Success response:
         msg: 'Code avaiable for this user'
@@ -308,13 +349,7 @@ module.exports = (router) => {
         500(Unknown: see more in response content)
 
         -Example:
-        GET http://localhost:3000/api/user/password/restore/check
-        Content-Type: application/json
-
-        {
-            "login": "Destry", (or email)
-            "code": "000000"
-        }
+        GET http://localhost:3000/api/user/password/restore/check?login=Destry&code=452452
     */
     router.get('/password/restore/check', controller.checkRestoreCode);
 

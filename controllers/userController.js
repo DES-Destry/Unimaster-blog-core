@@ -71,7 +71,7 @@ async function findUserByLogin(login) {
 
     // These two variables cannot be populated at the same time.
     // One of them is necessarily undefined.
-    return findedUserByEmail ? findedUserByEmail : findedUserByUsername;
+    return findedUserByEmail || findedUserByUsername;
 }
 
 async function changeUsernameErrorsHandled(newUsername, currentUser, res) {
@@ -179,7 +179,7 @@ async function sendPasswordRestoreCode(user, code) {
     await sendMail(user.email, 'Your Unimaster blog profile password restoring code!', emailContent);
 }
 
-async function checkOldCode(currentUser, res) {
+async function checkOldVerificationCode(currentUser, res) {
     const response = Object.create(objects.serverResponse);
     const existedCode = await VerificationUser.findOne({ user: currentUser._id });
 
@@ -203,7 +203,7 @@ async function checkOldCode(currentUser, res) {
     return true;
 }
 
-async function generateNewCode(currentUser) {
+async function generateNewVerificationCode(currentUser) {
     const verificationCode = crypto.randomBytes(32).toString('hex');
     new VerificationUser({ user: currentUser._id, verificationCode }).save();
 
@@ -225,7 +225,30 @@ async function changePasswordAndGetToken(user, password) {
     return (await User.findById(user._id)).genToken();
 }
 
-async function checkPasswordCode(login, code, res) {
+async function availableToCreateNewRestoreCode(login, res) {
+    const response = Object.create(objects.serverResponse);
+    const userToRestore = await findUserByLogin(login);
+    const existedCode = await RestoreUser.findOne({ userToRestore: userToRestore?._id });
+
+    if (existedCode) {
+        const passed = (new Date().getTime() - existedCode.creationDate.getTime()) / 1000;
+        if (passed < 300) {
+            response.success = false;
+            response.msg = 'You can get restore code only 1 times per 5 minutes';
+            response.content = {
+                secondsLeft: Math.round(300 - passed),
+                timeout: existedCode.creationDate,
+            };
+
+            res.status(403).json(response);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+async function checkRestoreCode(login, code, res) {
     const response = Object.create(objects.serverResponse);
     const restoreRequired = await RestoreUser.findOne({ restoreCode: code }).populate('userToRestore');
 
@@ -243,6 +266,58 @@ async function checkPasswordCode(login, code, res) {
 }
 
 module.exports = {
+    async exists(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            const { login } = req.query;
+            
+            const user = await findUserByLogin(login);
+
+            if (!user) {
+                response.success = false;
+                response.msg = 'This user doesn\'t exists';
+                
+                res.status(404).json(response);
+                return;
+            }
+
+            response.success = true;
+            response.msg = 'User with this login has been founded';
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
+    async getDataAboutUser(req, res) {
+        const response = Object.create(objects.serverResponse);
+
+        try {
+            const { username } = req.params;
+
+            const userData = await User.findOne({ username });
+
+            if (!userData) {
+                response.success = false;
+                response.msg = 'User not found';
+                
+                res.status(404).json(response);
+            }
+
+            response.success = true;
+            response.msg = 'User has been found';
+            response.content = { userData };
+
+            res.json(response);
+        }
+        catch (err) {
+            unknownError(res, err);
+        }
+    },
+
     async changeDescription(req, res) {
         const response = Object.create(objects.serverResponse);
 
@@ -289,7 +364,7 @@ module.exports = {
                 oldUsername: currentUser.username,
             }).save();
 
-            fs.rename(join(config.avatarPath, `${currentUser.username}.jpeg`), join(config.avatarPath, `${newUsername}.jpeg`), err => {
+            fs.rename(join(config.avatarPath, `${currentUser.username}.jpeg`), join(config.avatarPath, `${newUsername}.jpeg`), async err => {
                 if (err) {
                     response.content.successAvatarChange = false;
                 }
@@ -514,6 +589,10 @@ module.exports = {
                 return;
             }
 
+            // Not more 1 code per 5 minuts.
+            if (!(await availableToCreateNewRestoreCode(login, res))) return;
+
+            // Delete code for this user. In future will created new code.
             await RestoreUser.findOneAndDelete({ userToRestore: userToRestore._id });
 
             const restoreCode = crypto.randomInt(100000, 999999);
@@ -537,9 +616,9 @@ module.exports = {
         try {
             if (validations.validateInput(req, res)) return;
 
-            const { login, code } = req.body;
+            const { login, code } = req.query;
 
-            if (!(await checkPasswordCode(login, code, res))) return;
+            if (!(await checkRestoreCode(login, code, res))) return;
 
             response.success = true;
             response.msg = 'Code avaiable for this user';
@@ -559,7 +638,7 @@ module.exports = {
 
             const { login, code, newPassword } = req.body;
 
-            if (!(await checkPasswordCode(login, code, res))) return;
+            if (!(await checkRestoreCode(login, code, res))) return;
 
             const userToRestore = await findUserByLogin(login);
             const token = await changePasswordAndGetToken(userToRestore, newPassword);
@@ -616,8 +695,8 @@ module.exports = {
                 return;
             }
 
-            if (await checkOldCode(currentUser, res)) {
-                await generateNewCode(currentUser);
+            if (await checkOldVerificationCode(currentUser, res)) {
+                await generateNewVerificationCode(currentUser);
 
                 response.success = true;
                 response.msg = 'Verification code has been sended again';
